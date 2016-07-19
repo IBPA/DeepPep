@@ -1,0 +1,4 @@
+Sparse Input:
+https://github.com/Lasagne/Lasagne/issues/317
+
+%sparsity 0.995109771675
