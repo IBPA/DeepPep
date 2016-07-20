@@ -1,4 +1,5 @@
 #!/usr/bin/env python3.5
+# run parameters: CRUDDII/CRUDDII_ALL_n100_p91_th.txt CRUDDII/CRUDDII_ALL_n100_p91.1n.txt
 
 import os
 import sys
@@ -95,42 +96,5 @@ for line in f2:
     c=c+1
 X=X.astype(np.float32)
 y=y.astype(np.float32)
-net2.fit(X, y)
+#net2.fit(X, y)
 
-
-# FILE 3=======================================================
-f3=open(sys.argv[3],'r')
-l=[]
-for line in f3:
-    line=line[:-1]
-    l.append(line)	
-c=0
-o1=open(sys.argv[5],'w')
-for j in range(len(l)):
-	f4=open(sys.argv[4]+'.'+l[j]+'.txt','r')
-	c=0
-	V=np.zeros((400,1,50104))
-	for line in f4:
-		line=line[:-1]
-		for i in range(0,len(line)):
-			if line[i] == 'X':
-				V[c,0,i]=1
-        	#if line[i] == 'Z':
-            	#	continue
-        	#V[c,AA.index(line[i]),i]=1
-		c=c+1
-	V=V.astype(np.float32)
-	P1=net2.predict(V)
-	for i in range(400):
-		o1.write(l[j]+'\t'+str(P1[i][0])+'\n')
-
-P2=net2.predict(X)
-o2=open(sys.argv[6],'w')
-for i in range(400):
-    o2.write(str(P2[i][0])+'\n')
-
-# Training for 1000 epochs will take a while.  We'll pickle the
-# trained model so that we can load it back later:
-#import cPickle as pickle
-#with open('net2.pickle', 'wb') as f:
-#    pickle.dump(net2, f, -1)
