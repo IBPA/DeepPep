@@ -1,12 +1,9 @@
 #!/usr/bin/env python3.5
 # run parameters: CRUDDII/CRUDDII_ALL_n100_p91_th.txt CRUDDII/CRUDDII_ALL_n100_p91.1n.txt
 
-import os
 import sys
-import numpy as np
 import csv
 
-#X=np.zeros((400,50104), dtype=np.int_)
 def sparseWriteLineToFiles(strLine, bfList, lineId):
     currProtId=0
     currProtStart=0
@@ -52,7 +49,7 @@ for strLine in bfInput:
     rId=rId+1
 
 
-#c) Calculate width of each protein 
+#c) Calculate width of each protein using the first line
 bfInput.seek(0)
 nWidth=0
 currProtId=0
@@ -70,7 +67,7 @@ while currChar != '\n':
 metaInfo[currProtId].append(nWidth)
 
 #d) Save the metaInfo
-with open('sparseData/metaInfo.csv', 'w', newline='') as csvfile:
+with open(strDirname + 'metaInfo.csv', 'w', newline='') as csvfile:
     writer = csv.writer(csvfile)
     writer.writerows(metaInfo)
 
