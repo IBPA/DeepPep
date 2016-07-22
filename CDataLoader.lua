@@ -36,7 +36,7 @@ function CDataLoader:pri_getLineInfo(file)
   local strLine = file:read("*line")
   local taIdx = strLine:split(',')
   local teIdx = torch.Tensor(table.getn(taIdx), 2)
-  teIdx:select(2, 1):copy(torch.Tensor(taIdx))
+  teIdx:select(2, 1):copy(torch.add(torch.Tensor(taIdx), 1)) -- add 1 to indexes since it's 0 based
   teIdx:select(2, 2):fill(1)
 
   return lineId, teIdx
@@ -68,6 +68,20 @@ function CDataLoader:loadSparseInputSingle(strFilename)
   end
 
   return taRes
+end
+
+function CDataLoader:loadSparseMetaInfo()
+  local strFilename = self.exprSettings.strFilenameMetaInfo
+  local taLoadParams = {header=false, separator=","}
+  local f = csv.open(strFilename, taLoadParams)
+
+  local taMetaInfo= {}
+  for fields in f:lines() do
+    local taRow = { strFilename = fields[1], nWidth = fields[2] }
+    table.insert(taMetaInfo, taRow)
+  end
+
+  return taMetaInfo
 end
 
 function CDataLoader:loadTarget()
