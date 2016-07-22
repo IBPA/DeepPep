@@ -14,6 +14,7 @@ def sparseWriteLineToFiles(strLine, bfList, lineId):
     protNonEmpty={}
     for i in range(0,len(strLine)):
         if strLine[i] == 'B':
+            isCurrProtEmpty=True
             currProtId=currProtId+1
             currProtStart=i+1
         elif strLine[i] == 'X':
@@ -31,29 +32,45 @@ def sparseWriteLineToFiles(strLine, bfList, lineId):
 
     return #End sparseWriteLineToFiles
 
+strDirname='./sparseData/'
 nProteins=182
 bfList=[]
 metaInfo=[]
 
-# Create protein files
+#a) Create protein files
 for i in range(0, nProteins):
-    strFilename='sparseData/p{:d}.sprs'.format(i)
+    strFilename='p{:d}.sprs'.format(i)
     metaInfo.append([strFilename])
-    bfCurr=open(strFilename, 'w')
+    bfCurr=open(strDirname + strFilename, 'w')
     bfList.append(bfCurr)
 
-# Read from bfInput and write to bfList (protein files)
-'''
+#b) Read from bfInput and write to bfList (protein files)
 bfInput=open(sys.argv[1], 'r')
 rId=0
 for strLine in bfInput:
     sparseWriteLineToFiles(strLine, bfList, rId)
     rId=rId+1
-'''
 
-# Record the meta info
+
+#c) Calculate width of each protein 
 bfInput.seek(0)
-bfInput.readline()
-#for item in metaInfo:
-#    print(item[0])
+nWidth=0
+currProtId=0
+currChar=bfInput.read(1)
+while currChar != '\n':
+
+    if currChar == 'B':
+        metaInfo[currProtId].append(nWidth)
+        nWidth=-1
+        currProtId=currProtId+1
+
+    nWidth=nWidth+1
+    currChar=bfInput.read(1)
+
+metaInfo[currProtId].append(nWidth)
+
+#d) Save the metaInfo
+with open('sparseData/metaInfo.csv', 'w', newline='') as csvfile:
+    writer = csv.writer(csvfile)
+    writer.writerows(metaInfo)
 
