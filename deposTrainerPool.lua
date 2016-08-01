@@ -5,12 +5,12 @@ local myUtil = require("../MyCommon/util.lua")
 do
   local trainerPool = {}
 
-  function trainerPool.getDefaultTrainParams(nRows, strOptimMethod)
+  function trainerPool.getDefaultTrainParams(nRows, strOptimMethod, nMaxIteration)
 
     local taTrainParam = {  --batchSize = 9, 
                             batchSize = math.floor(nRows),
                             criterion = nn.MSECriterion(),
-                            nMaxIteration = 10,
+                            nMaxIteration = nMaxIteration or 10,
                             coefL1 = 0.0,
                             coefL2 = 0.0,
                             strOptimMethod = strOptimMethod or "CG",
@@ -100,9 +100,9 @@ do
     return fErr
   end
 
-  function trainerPool.trainSparseInputNet(mNet, taInput, teTarget)
+  function trainerPool.trainSparseInputNet(mNet, taInput, teTarget, nMaxIteration)
     local criterion = nn.MSECriterion()
-    local taTrainParam = trainerPool.getDefaultTrainParams(teTarget:size(1),"CG" )
+    local taTrainParam = trainerPool.getDefaultTrainParams(teTarget:size(1),"CG", nMaxIteration )
 
     local errPrev = math.huge
     local errCurr = math.huge
