@@ -51,7 +51,7 @@ def fuLoadProtProbsFromPepXml(strXmlPath):
 def fuSavePepProbsFlat(dicPeptideProbs, strFilePath):
     with open(strFilePath, 'w') as bfFile:
         for strPeptide, dProb in dicPeptideProbs.items():
-            bfFile.write('{!s},{:.4f}\n'.format(strPeptide , dProb))
+            bfFile.write('{!s},{:.6f}\n'.format(strPeptide , dProb))
 
     return
 
@@ -63,6 +63,14 @@ def fuLoadPepProbsFromCsv(strFilePath):
             listPeptideProb.append([row[0], float(row[1])])
 
     return listPeptideProb
+
+def fuSavePepProbsTargetFromList(strFilePath, listPeptideProb):
+    with open(strFilePath, 'w') as bfFile:
+        for row in listPeptideProb:
+            dProb = row[1]
+            bfFile.write('{:.6f}\n'.format(dProb))
+
+    return
 
 def fuGetProtRefFileNames(strBaseProtRefsPath):
     listProtFileName = os.listdir(strBaseProtRefsPath)
@@ -110,13 +118,15 @@ def fuGetProtLength(strFilePath):
         return nLength
 
 
-def fuSaveMetaInfo(strBaseProtRefsPath, strMetaInfoFilename, listProtRefFileName):
+def fuSaveMetaInfo(strBasePath, strMetaInfoFilename):
+    listProtFiles = [i for i in  os.listdir(strBasePath) if i.endswith('.txt') ]
     with open(strMetaInfoFilename, 'w') as bfFile:
-        for strProtFileName in listProtRefFileName:
+        for strProtFileName in listProtFiles:
             strFilePath = '{!s}/{!s}'.format(strBaseProtRefsPath, strProtFileName)
             nProtWidth = fuGetProtLength(strFilePath)
             bfFile.write('{!s},{:d}\n'.format(strProtFileName, nProtWidth))
 
+strSparseDir = './sparseData'
 
 strFaPath = '/home/user/eetemame/data/protein/yeast/sc_SGD_0604.fasta'
 strBaseProtRefsPath = '/home/user/eetemame/data/protein/yeast/protRefs'
@@ -131,10 +141,10 @@ strFlatFile = '/home/user/eetemame/data/protein/yeast/all/peptideProbs.csv'
 
 listPeptideProb = fuLoadPepProbsFromCsv(strFlatFile)
 listProtRefFileName = fuGetProtRefFileNames(strBaseProtRefsPath)
+#fuSavePepProbsTargetFromList('{!s}/target.csv'.format(strSparseDir), listPeptideProb) 
 
-strSparseDir = './sparseData'
 strMetaInfoFilename = '{!s}/metaInfo.csv'.format(strSparseDir)
-fuSaveMetaInfo(strBaseProtRefsPath, strMetaInfoFilename, listProtRefFileName)
+fuSaveMetaInfo(strSparseDir, strMetaInfoFilename)
 
 # keep the following in the same order due to dependencies
 def fuRunProt(strProtFileName): 

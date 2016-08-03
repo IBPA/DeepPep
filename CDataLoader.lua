@@ -39,7 +39,7 @@ function CDataLoader:pri_getLineInfo(file)
   teIdx:select(2, 1):copy(torch.add(torch.Tensor(taIdx), 1)) -- add 1 to indexes since it's 0 based
   teIdx:select(2, 2):fill(1)
 
-  return lineId, teIdx
+  return lineId, teIdx:clone()
 end
 
 function CDataLoader:loadSparseInputSingle(strFilename)
@@ -56,18 +56,24 @@ function CDataLoader:loadSparseInputSingle(strFilename)
       taRows[id] = teIdx
     end
   end
+  file:close()
+
 
   -- Fill in the empty lines
+--  --[[
   local taRes = {}
   for i=1,self.exprSettings.nRows do
     if taRows[i] == nil then
+      --todo: undo this
       taRes[i] = torch.Tensor({{1, 0}})
     else
       taRes[i] = taRows[i]
     end
   end
+  --]]
 
-  return taRes
+
+  return taRes --taRows --taRes
 end
 
 function CDataLoader:loadSparseMetaInfo()
