@@ -4,10 +4,10 @@ function SparseLinearX:__init(inputSize, outputSize)
    parent.__init(self)
 
    -- Todo: remove artifitial initial weights and implement reset with random
-   self.weight = torch.Tensor(outputSize, inputSize):fill(1)
-   self.bias = torch.Tensor(outputSize):fill(0.5)
-   self.gradWeight = torch.Tensor(outputSize, inputSize)
-   self.gradBias = torch.Tensor(outputSize)
+   self.weight = torch.Tensor(outputSize, inputSize):fill(0)
+   self.bias = torch.Tensor(outputSize):fill(0)
+   self.gradWeight = torch.Tensor(outputSize, inputSize):fill(0)
+   self.gradBias = torch.Tensor(outputSize):fill(0)
 
    self:reset()
 end
