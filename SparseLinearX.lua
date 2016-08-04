@@ -64,6 +64,9 @@ function SparseLinearX:updateOutput(input)
 end
 
 function SparseLinearX:updateGradInput(input, gradOutput)
+  return nil
+  -- maybe we dont need this for the first layer
+  --[[
   if self.gradInput then
 
     local nElement = self.gradInput:nElement()
@@ -76,6 +79,7 @@ function SparseLinearX:updateGradInput(input, gradOutput)
 
     return self.gradInput
   end
+  --]]
 end
 
 function SparseLinearX:accGradParameters(input, gradOutput, scale)

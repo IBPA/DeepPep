@@ -28,6 +28,7 @@ for key, taFileInfo in pairs(taMetaInfo) do
   mLayer0:add(nn.SparseLinearX(taFileInfo.nWidth, nUnitWidthLayer0 ))
   nParallels = nParallels + 1
 end
+----[[
 
 -- 2) Build the rest of the FNN:
 local mNet = nn.Sequential()
@@ -53,20 +54,19 @@ collectgarbage()
 
 sys.tic()
 local output = mNet:forward(taInput)
-print("elapsed: " .. sys.toc())
+print("elapsed for single forward: " .. sys.toc())
 print(output:size())
---[[
+
 -- 4) Load the Target
 local teTarget = cDataLoader:loadTarget()
 
 -- 5) Train
---[[
-  local t1 = os.time()
-  local dTrainErr = trainerPool.trainSparseInputNet(mNet, taInput, teTarget, 1)
-  local t2 = os.time()
-  print("\ntraining error:" .. dTrainErr) 
-  print("elapsed time(s):" .. os.difftime(t2, t1))
-print("readline:")
-io.read('*line')
+----[[
+sys.tic()
+local dTrainErr = trainerPool.trainSparseInputNet(mNet, taInput, teTarget, 20)
+print("\ntraining error:" .. dTrainErr) 
+print("training elapsed time(s):" .. sys.toc())
+--print("readline:")
+--io.read('*line')
   --]]
 --]]
