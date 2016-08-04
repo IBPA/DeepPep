@@ -42,6 +42,37 @@ function CDataLoader:pri_getLineInfo(file)
   return lineId, teIdx:clone()
 end
 
+function CDataLoader:pri_insertLineInfo(taIdx, strLine)
+  local taSplit1 = strLine:split(':')
+  local nRowId = tonumber(taSplit1[1])
+
+  local taSplit2 = taSplit1[2]:split('|')
+  for key, value in pairs(taSplit2) do
+    local taSplit3 = value:split(',')
+    local nStartId = tonumber(taSplit3[1])
+    local nLength = tonumber(taSplit3[2])
+    local taRecord = {nRowId + 1, nStartId + 1, nLength } -- adding 1 since indexes are 0 based
+    table.insert(taIdx, taRecord)
+  end
+end
+
+function CDataLoader:loadSparseInputSingleV2(strFilename)
+  local strFilename = string.format("%s/%s", self.exprSettings.strBaseDir, strFilename)
+  local taRes = { nBatchSize = self.exprSettings.nRows }
+
+  local file = io.open(strFilename, "r")
+  local taIdx = {}
+
+  for strLine in file:lines() do
+    self:pri_insertLineInfo(taIdx, strLine)
+  end
+  file:close()
+  
+  taRes.teOnes = torch.LongTensor(taIdx)
+
+  return taRes
+end
+
 function CDataLoader:loadSparseInputSingle(strFilename)
   local strFilename = string.format("%s/%s", self.exprSettings.strBaseDir, strFilename)
 
