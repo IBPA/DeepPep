@@ -14,6 +14,19 @@ in_strPeptideFilename = '{!s}/data/protein/sigma_49/Sigma_49.txt'.format(os.envi
 in_strProtRefsDir = './protRefs'
 out_strOutputBaseDir = './sparseData2'
 
-prepLib.breakFasta(in_strFastaFilename, in_strProtRefsDir)
+#prepLib.breakFasta(in_strFastaFilename, in_strProtRefsDir)
+listProtRefFileName = prepLib.getProtRefFileNames(in_strProtRefsDir)
+
 # load peptide probabilities
-#prepLib.genSparse(in_.strFastaFilename, out_.strOutputBaseDir)
+listPepProb = prepLib.loadPepProbsFromCsv(in_strPeptideFilename, " ", 1, 3)
+listPepProb = prepLib.consolidatePepProbs(listPepProb)
+
+
+
+# match peptides with proteins
+#prepLib.fuRunAllProt(listProtRefFileName[0:-1], in_strProtRefsDir, out_strOutputBaseDir, listPepProb)
+
+
+strMetaInfoFilename = '{!s}/metaInfo.csv'.format(out_strOutputBaseDir)
+prepLib.fuSaveMetaInfo(out_strOutputBaseDir, strMetaInfoFilename, in_strProtRefsDir)
+prepLib.fuSavePepProbsTargetFromList('{!s}/target.csv'.format(out_strOutputBaseDir), listPepProb) 
