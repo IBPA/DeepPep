@@ -33,7 +33,7 @@ do
 
     elseif taTrainParam.strOptimMethod == "CG" then
       taTrainParam.taOptimParams = {
-        maxIter = 10 }
+        maxIter = 20 }
       taTrainParam.fuOptim = optim.cg
 
     else

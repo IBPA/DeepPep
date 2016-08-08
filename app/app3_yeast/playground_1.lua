@@ -50,7 +50,6 @@ for key, taFileInfo in pairs(taMetaInfo) do
   local taOneInput = cDataLoader:loadSparseInputSingleV2(taFileInfo.strFilename)
   table.insert(taInput, taOneInput)
 end
-collectgarbage()
 
 sys.tic()
 local output = mNet:forward(taInput)
