@@ -28,7 +28,7 @@ function CExperiment:buildArch()
   self.mNet:add(nn.Linear(nParallels, 1))
 end
 
-function CExperiment:train(nIteration)
+function CExperiment:train(nIteration, isKeepData)
   local nIteration = nIteration or 20
 
   -- 1) load input
@@ -46,6 +46,31 @@ function CExperiment:train(nIteration)
   local dTrainErr = trainerPool.trainSparseInputNet(self.mNet, taInput, teTarget, nIteration)
   print("\ntraining error:" .. dTrainErr) 
   print("training elapsed time(s):" .. sys.toc())
+
+  -- 4) isKeepData
+  if isKeepData then
+    self.taInput = taInput
+  end
+
+end
+
+function CExperiment:save(strFilePath)
+  torch.save(strFilePath, self)
+end
+
+function CExperiment.loadFromFile(strFilePath)
+  local oExperiment = torch.load(strFilePath)
+
+  return oExperiment
+end
+
+function CExperiment:predict()
+
+  local nId = 0
+  for key, taFileInfo in pairs(self.taMetaInfo) do
+    nId = nId + 1
+    print(nId)
+  end
 
 end
 
