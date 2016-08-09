@@ -47,13 +47,17 @@ end
 function SparseLinearX:updateOutput(input)
   self.output = torch.zeros(input.nBatchSize, self.bias:size(1)) -- ToDo: just using dimention applicable to our particular problem
 
-  local nRecords = input.teOnes:size(1)
-  for i=1, nRecords do
-    local nRowId = input.teOnes[i][1]
-    local nStartId = input.teOnes[i][2]
-    local nLength = input.teOnes[i][3]
+  if input.teOnes:nElement() ~= 0 then
 
-    self.output[nRowId]:add(self.weight:narrow(2, nStartId, nLength):sum(2))
+    local nRecords = input.teOnes:size(1)
+    for i=1, nRecords do
+      local nRowId = input.teOnes[i][1]
+      local nStartId = input.teOnes[i][2]
+      local nLength = input.teOnes[i][3]
+
+      self.output[nRowId]:add(self.weight:narrow(2, nStartId, nLength):sum(2))
+    end
+
   end
 
 --  self.output:add(self.bias:expandAs(self.output))

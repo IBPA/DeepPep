@@ -18,5 +18,6 @@ else
 end
 
 
-oExperiment:predict()
+local taMetaInfo = oExperiment:getConfidenceRange()
+print(taMetaInfo)
 

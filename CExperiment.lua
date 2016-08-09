@@ -64,13 +64,80 @@ function CExperiment.loadFromFile(strFilePath)
   return oExperiment
 end
 
-function CExperiment:predict()
+function CExperiment:pri_getLayers() -- ToDo: this would change for other architectures
+  local mFirst = nn.Sequential()
+  mFirst:add(self.mNet.modules[1])
+  mFirst:add(self.mNet.modules[2])
 
-  local nId = 0
-  for key, taFileInfo in pairs(self.taMetaInfo) do
-    nId = nId + 1
-    print(nId)
+  local mRest = self.mNet.modules[3]
+
+  return {mFirst = mFirst, mRest = mRest}
+end
+
+function CExperiment:pri_getEmptyInput(nRows)
+  return { nBatchSize = nRows, teOnes = torch.LongTensor() }
+end
+
+function CExperiment:getConfidenceOne(teOutputAll, teOutputFirst, taMNetLayers, nProtId, taProtData)
+  -- 1) save the nProtId column we are about the replace
+  local teProtOrig = teOutputFirst:narrow(2, nProtId, 1):clone()
+
+  -- 2) replace the protein column with predicted value for empty info  for nProtId
+  local mProt = taMNetLayers.mFirst.modules[1].modules[nProtId]
+  local teEmpty = self:pri_getEmptyInput(teOutputFirst:size(1))
+  local teProt = mProt:forward(teEmpty):clone()
+  teOutputFirst:narrow(2, nProtId, 1):copy(teProt)
+
+  -- 3) calculate the final prediction
+  local teOutputAllNew = taMNetLayers.mRest:forward(teOutputFirst):clone()
+
+  -- 4) calculate the difference
+  local teOutputResidual = torch.add(torch.mul(teOutputAllNew, -1),
+                                     teOutputAll):abs():squeeze()
+                                      
+  -- 5) replace the orig column
+  teOutputFirst:narrow(2, nProtId, 1):copy(teProtOrig)
+
+  -- 6) calculate prot_pepdide confidences
+
+  -- 6.1) calculate the counts
+  local taProtPepCount = {}
+  local nRows = taProtData.teOnes:size(1)
+  for i=1, nRows do
+    local nIdx = taProtData.teOnes[i][1]
+    local nCount = taProtData.teOnes[i][3]
+
+    local nExistingCount = taProtPepCount[nIdx] or 0
+    taProtPepCount[nIdx] = nExistingCount + nCount
   end
+
+  -- 6.2) calculate the confidences
+  local dSum = 0
+  for key, value in pairs(taProtPepCount) do
+    local dConfCurr = teOutputResidual[key]/value
+    dSum = dSum + dConfCurr
+  end
+
+  return dSum/taProtData.nBatchSize
+end
+
+function CExperiment:getConfidenceRange(nStart, nEnd)
+  sys.tic()
+
+  local nStart = nStart or 1
+  local nEnd = nEnd or #self.taMetaInfo
+
+  local teOutputAll = self.mNet:forward(self.taInput):clone()
+  local taMNetLayers = self:pri_getLayers()
+  local teOutputFirst = taMNetLayers.mFirst:forward(self.taInput):clone()
+
+  for i=1, nEnd do
+    local taFileInfo = self.taMetaInfo[i]
+    taFileInfo.dConf = self:getConfidenceOne(teOutputAll, teOutputFirst, taMNetLayers, i, self.taInput[i])
+  end
+
+  print("confidence total elapsed time(s):" .. sys.toc())
+  return self.taMetaInfo
 
 end
 
