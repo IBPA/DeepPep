@@ -138,4 +138,17 @@ function CDataLoader:loadTarget()
   return teResult
 end
 
+function CDataLoader:loadProtRef()
+  local strFilename = self.exprSettings.strFilenameProtRef
+  local taLoadParams = {header=false, separator=","}
+  local f = csv.open(strFilename, taLoadParams)
+
+  local taRecords = {}
+  for fields in f:lines() do
+    taRecords[fields[1]] = 1
+  end
+
+  return taRecords
+end
+
 

@@ -131,14 +131,30 @@ function CExperiment:getConfidenceRange(nStart, nEnd)
   local taMNetLayers = self:pri_getLayers()
   local teOutputFirst = taMNetLayers.mFirst:forward(self.taInput):clone()
 
+  local taProtConf = {}
   for i=1, nEnd do
     local taFileInfo = self.taMetaInfo[i]
-    taFileInfo.dConf = self:getConfidenceOne(teOutputAll, teOutputFirst, taMNetLayers, i, self.taInput[i])
+    local dConf = self:getConfidenceOne(teOutputAll, teOutputFirst, taMNetLayers, i, self.taInput[i])
+    local strProtFilename = taFileInfo.strFilename
+    taProtConf[strProtFilename:sub(1, strProtFilename:len() -4)] = dConf -- remove the ".txt" from the end
   end
 
   print("confidence total elapsed time(s):" .. sys.toc())
-  return self.taMetaInfo
-
+  return taProtConf
 end
 
+function CExperiment:normalizeByMax(taConf)
+  local dConfMax = -math.huge
+  for key, value in pairs(taConf) do
+    dConfMax = math.max(value, dConfMax)
+  end
 
+  for key, value in pairs(taConf) do
+    taConf[key] = value/dConfMax
+  end
+end
+
+-- maybe done somewhere else:
+function CExperiment:getAUC(taConf)
+  local taRef = self.oDataLoader:loadProtRef()
+end
