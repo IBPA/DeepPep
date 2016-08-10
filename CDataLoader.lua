@@ -151,4 +151,12 @@ function CDataLoader:loadProtRef()
   return taRecords
 end
 
+function CDataLoader:saveProtInfo(taProtInfo)
+  local file = io.open(self.exprSettings.strFilenameProtInfo, "w")
+  for key, value in pairs(taProtInfo) do
+    file:write(string.format("%s,%.12f,%d\n", value[1], value[2], value[3]))
+  end
+
+  file:close()
+end
 

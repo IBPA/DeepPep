@@ -1,7 +1,8 @@
 require('../../CExperiment.lua')
 require '../../CDataLoader.lua'
+torch.manualSeed(1)
 
-local isRetrain = false
+local isRetrain = true
 local oExperiment
 local exprSetting = require('./lSettings.lua')
 
@@ -10,7 +11,7 @@ if isRetrain then
   oExperiment = CExperiment.new(oDataLoader)
 
   oExperiment:buildArch()
-  oExperiment:train(10, true)
+  oExperiment:train(30, true)
   oExperiment:save(exprSetting.strFilenameExperiment1Obj)
 
 else
@@ -18,10 +19,11 @@ else
 end
 
 
-local taProtConf = oExperiment:getConfidenceRange()
-oExperiment:normalizeByMax(taProtConf)
-print(taProtConf)
-local dAUC = oExperiment:getAUC(taProtConf)
+local taProtInfo = oExperiment:getConfidenceRange()
+oExperiment:saveResult(taProtInfo)
+
+--oExperiment:normalizeByMax(taProtConf)
+--local dAUC = oExperiment:getAUC(taProtConf)
 
 --[[
 local taConf = {}

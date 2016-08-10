@@ -17,7 +17,11 @@ function CExperiment:buildArch()
   local mLayer0 = nn.ParallelTable()
   local nParallels = 0
   for key, taFileInfo in pairs(self.taMetaInfo) do
-    mLayer0:add(nn.SparseLinearX(taFileInfo.nWidth, nUnitWidthLayer0 ))
+    local mSeq = nn.Sequential()
+      mSeq:add(nn.SparseLinearX(taFileInfo.nWidth, nUnitWidthLayer0 ))
+      mSeq:add(nn.Dropout(0.60))
+    
+    mLayer0:add(mSeq)
     nParallels = nParallels + 1
   end
 
@@ -25,7 +29,13 @@ function CExperiment:buildArch()
   self.mNet = nn.Sequential()
   self.mNet:add(mLayer0)
   self.mNet:add(nn.JoinTable(2))
-  self.mNet:add(nn.Linear(nParallels, 1))
+
+  local mSeq = nn.Sequential()
+    mSeq:add(nn.Linear(nParallels, 1))
+    mSeq:add(nn.Sigmoid())
+--    mSeq:add(nn.Dropout(0.70))
+  self.mNet:add(mSeq)
+--  self.mNet:add(nn.Linear(nParallels, 1))
 end
 
 function CExperiment:train(nIteration, isKeepData)
@@ -131,18 +141,38 @@ function CExperiment:getConfidenceRange(nStart, nEnd)
   local taMNetLayers = self:pri_getLayers()
   local teOutputFirst = taMNetLayers.mFirst:forward(self.taInput):clone()
 
-  local taProtConf = {}
+  local taProtInfo = {}
   for i=1, nEnd do
     local taFileInfo = self.taMetaInfo[i]
     local dConf = self:getConfidenceOne(teOutputAll, teOutputFirst, taMNetLayers, i, self.taInput[i])
+
     local strProtFilename = taFileInfo.strFilename
-    taProtConf[strProtFilename:sub(1, strProtFilename:len() -4)] = dConf -- remove the ".txt" from the end
+    local strProtName = strProtFilename:sub(1, strProtFilename:len() -4)  -- remove the ".txt" from the end
+    local taRow = { strProtName, dConf }
+    table.insert(taProtInfo, taRow)
   end
 
   print("confidence total elapsed time(s):" .. sys.toc())
-  return taProtConf
+  return taProtInfo
 end
 
+function CExperiment:saveResult(taProtInfo)
+  local taRef = self.oDataLoader:loadProtRef()
+
+  for key, value in pairs(taProtInfo) do
+    local strProtName = value[1]
+
+    if taRef[strProtName] == nil then
+      table.insert(value, 0)
+    else
+      table.insert(value, 1)
+    end
+  end
+
+  self.oDataLoader:saveProtInfo(taProtInfo)
+end
+
+--[[
 function CExperiment:normalizeByMax(taConf)
   local dConfMax = -math.huge
   for key, value in pairs(taConf) do
@@ -158,3 +188,4 @@ end
 function CExperiment:getAUC(taConf)
   local taRef = self.oDataLoader:loadProtRef()
 end
+--]]
