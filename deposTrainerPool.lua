@@ -22,7 +22,7 @@ do
       taTrainParam.taOptimParams = { 
         learningRate = 0.05,
         learningRateDecay = 0.995,
-        momentum = 0.1 }
+        momentum = 0.9 }
       taTrainParam.fuOptim = optim.sgd
   
     elseif taTrainParam.strOptimMethod == "LBFGS" then
@@ -80,7 +80,7 @@ do
           gradParameters:add( sign(parameters):mul(taTrainParam.coefL1) + parameters:clone():mul(taTrainParam.coefL2) )
         end
         
-        overallErr = overallErr + f
+--        overallErr = overallErr + f
 
         return f, gradParameters
       end --fuEval
@@ -110,6 +110,7 @@ do
     for i=1, taTrainParam.nMaxIteration do
       errCurr = trainerPool.pri_trainSparseInputNet_SingleRound(mNet, taInput, teTarget, taTrainParam)
 
+--      --[[
       if errPrev <= errCurr or myUtil.isNan(errCurr)  then
         print("** early stop **")
         return errPrev
@@ -121,6 +122,7 @@ do
       else
         error("invalid value for errCurr!")
       end
+      --]]
 
     end
 

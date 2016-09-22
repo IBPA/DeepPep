@@ -10,8 +10,8 @@ if isRetrain then
   local oDataLoader = CDataLoader.new(exprSetting)
   oExperiment = CExperiment.new(oDataLoader)
 
-  oExperiment:buildArch()
-  oExperiment:train(20, true)
+  oExperiment:buildArch(0.5)
+  oExperiment:train(20, true) 
   oExperiment:save(exprSetting.strFilenameExperiment1Obj)
 
 else
@@ -19,6 +19,8 @@ else
 end
 
 
+----[[Todo: Uncomment
 local taProtInfo = oExperiment:getConfidenceRange()
 oExperiment:saveResult(taProtInfo)
 
+--]]

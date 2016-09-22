@@ -9,8 +9,9 @@ function CExperiment:__init(oDataLoader)
   self.oDataLoader = oDataLoader
 end
 
-function CExperiment:buildArch()
+function CExperiment:buildArch(dDropoutRate)
   self.taMetaInfo = self.oDataLoader:loadSparseMetaInfo()
+  local dDropoutRate = dDropoutRate or 0.7
 
   -- 1) Build the layer0
   local nUnitWidthLayer0 = 1
@@ -19,7 +20,7 @@ function CExperiment:buildArch()
   for key, taFileInfo in pairs(self.taMetaInfo) do
     local mSeq = nn.Sequential()
       mSeq:add(nn.SparseLinearX(taFileInfo.nWidth, nUnitWidthLayer0 ))
-      mSeq:add(nn.Dropout(0.60))
+      mSeq:add(nn.Dropout(dDropoutRate))
     
     mLayer0:add(mSeq)
     nParallels = nParallels + 1
@@ -31,7 +32,7 @@ function CExperiment:buildArch()
   self.mNet:add(nn.JoinTable(2))
 
   local mSeq = nn.Sequential()
-    mSeq:add(nn.Linear(nParallels, 1))
+    mSeq:add(nn.Linear(nParallels*nUnitWidthLayer0, 1))
     mSeq:add(nn.Sigmoid())
 --    mSeq:add(nn.Dropout(0.70))
   self.mNet:add(mSeq)
@@ -172,20 +173,3 @@ function CExperiment:saveResult(taProtInfo)
   self.oDataLoader:saveProtInfo(taProtInfo)
 end
 
---[[
-function CExperiment:normalizeByMax(taConf)
-  local dConfMax = -math.huge
-  for key, value in pairs(taConf) do
-    dConfMax = math.max(value, dConfMax)
-  end
-
-  for key, value in pairs(taConf) do
-    taConf[key] = value/dConfMax
-  end
-end
-
--- maybe done somewhere else:
-function CExperiment:getAUC(taConf)
-  local taRef = self.oDataLoader:loadProtRef()
-end
---]]

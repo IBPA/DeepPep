@@ -5,7 +5,10 @@ import statistics as stat
 import re
 from multiprocessing.dummy import Pool as ThreadPool
 
-def breakFasta(strFastaFilename, strProtRefsDir):
+def breakFasta(strFastaFilename, strProtRefsDir, nameId):
+  if nameId is None:
+    nameId = 0
+
   # create dir if missing
   if not os.path.exists(strProtRefsDir):
         os.makedirs(strProtRefsDir)
@@ -13,7 +16,13 @@ def breakFasta(strFastaFilename, strProtRefsDir):
   # read from fasta file and generate one file for each protein
   counter = 0
   for currRecord in SeqIO.parse(strFastaFilename, "fasta"):
-    strFilePath = '{!s}/{!s}.txt'.format(strProtRefsDir, currRecord.name.split('|')[0])
+
+    currRecordNameParts = currRecord.name.split('|')
+    currRecordNameToUse = currRecordNameParts[0] # as default, use first part as name
+    if len(currRecordNameParts)>1:
+      currRecordNameToUse = currRecordNameParts[nameId]
+
+    strFilePath = '{!s}/{!s}.txt'.format(strProtRefsDir, currRecordNameToUse )
     with open(strFilePath, 'w') as bfProt:
             bfProt.write(str(currRecord.seq))
 
@@ -49,7 +58,8 @@ def consolidatePepProbs(listPeptideProb):
     # b) consolidate
     listPeptideProbRes = []
     for strPeptide, listProb in dicAll.items():
-        listPeptideProbRes.append([strPeptide, stat.median(listProb)])
+      #        listPeptideProbRes.append([strPeptide, stat.median(listProb)]) #ToDo: uncomment after removing next line if you want median
+        listPeptideProbRes.append([strPeptide, max(listProb)])
 
     return listPeptideProbRes
 

@@ -19,6 +19,7 @@ else
   oExperiment = CExperiment.loadFromFile(exprSetting.strFilenameExperiment1Obj)
 end
 
+
 ----[[ToDo: uncomment
 local taProtInfo = oExperiment:getConfidenceRange()
 oExperiment:saveResult(taProtInfo)
