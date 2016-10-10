@@ -25,23 +25,6 @@ function CDataLoader:loadSparseInput()
   return taRecords
 end
 
-function CDataLoader:pri_getLineInfo(file)
-  local lineId = file:read("*number") 
-  if lineId == nil then
-    return nil
-  end
-  lineId = lineId + 1 -- since it's zero based!
-
-  file:seek("cur", 1) -- skip ":"
-  local strLine = file:read("*line")
-  local taIdx = strLine:split(',')
-  local teIdx = torch.Tensor(table.getn(taIdx), 2)
-  teIdx:select(2, 1):copy(torch.add(torch.Tensor(taIdx), 1)) -- add 1 to indexes since it's 0 based
-  teIdx:select(2, 2):fill(1)
-
-  return lineId, teIdx:clone()
-end
-
 function CDataLoader:pri_insertLineInfo(taIdx, strLine)
   local taSplit1 = strLine:split(':')
   local nRowId = tonumber(taSplit1[1])
@@ -73,39 +56,68 @@ function CDataLoader:loadSparseInputSingleV2(strFilename)
   return taRes
 end
 
-function CDataLoader:loadSparseInputSingle(strFilename)
-  local strFilename = string.format("%s/%s", self.exprSettings.strBaseDir, strFilename)
+function pri_getBlockRowIdx(taSparseInput)
+		-- capture the unique ids
+		local taUnique = {}
+		for i=1, taSparseInput.teOnes:size(1) do
+			taUnique[taSparseInput.teOnes[i][1]] = true
+		end
 
-  local taRows = {}
-  local file = io.open(strFilename, "r")
+		-- create block ids
+		local taBlockRowIdx = {}
+		for key, value in pairs(taUnique) do
+			table.insert(taBlockRowIdx, key)
+		end
+		local teBlockRowIdx = torch.LongTensor(taBlockRowIdx)
 
-  local id = -1; local teIdx = nil
-  taRows[id] = teIdx
-  while id ~= nil do
-    id, teIdx = self:pri_getLineInfo(file)
-    if id ~= nil then
-      taRows[id] = teIdx
-    end
-  end
-  file:close()
+		-- create reverse map (input to block)
+		local taBlockRowReverseMap = {}
+		for i=1, teBlockRowIdx:size(1) do
+				taBlockRowReverseMap[teBlockRowIdx[i]] = i
+		end
 
-
-  -- Fill in the empty lines
---  --[[
-  local taRes = {}
-  for i=1,self.exprSettings.nRows do
-    if taRows[i] == nil then
-      --todo: undo this
-      taRes[i] = torch.Tensor({{1, 0}})
-    else
-      taRes[i] = taRows[i]
-    end
-  end
-  --]]
-
-
-  return taRes --taRows --taRes
+		return teBlockRowIdx, taBlockRowReverseMap
 end
+
+function CDataLoader:pri_sparseToBlockSparse(taSparseInput, nWidth)
+
+  local taRes = { 
+									dDefault = torch.Tensor({1, 1, 1}):fill(0),
+									teRowIdx = nil,
+									teValue = nil}
+
+	local taBlockRowReverseMap = nil
+	taRes.teRowIdx, taBlockRowReverseMap = pri_getBlockRowIdx(taSparseInput)
+	local nBlocks = taRes.teRowIdx:size(1)
+	taRes.teValue =  torch.Tensor(nBlocks, nWidth, 1):fill(0)
+
+	local teOnes = taSparseInput.teOnes
+	for i=1, teOnes:size(1) do
+			local nRowId = taBlockRowReverseMap[teOnes[i][1]]
+			local nStartId = teOnes[i][2]
+			local nLength = teOnes[i][3]
+			taRes.teValue[nRowId]:narrow(1, nStartId, nLength):fill(1)
+	end
+
+	return taRes
+end
+
+function CDataLoader:loadBlockSparseInput()
+
+  self.taMetaInfo = self:loadSparseMetaInfo()
+	local taInput = {nBatchSize = self.exprSettings.nRows,
+									 taData = {}}
+  for key, taFileInfo in pairs(self.taMetaInfo) do
+    local taSparseInput = self:loadSparseInputSingleV2(taFileInfo.strFilename)
+		local taBlockSparseInput = self:pri_sparseToBlockSparse(taSparseInput, taFileInfo.nWidth)
+
+    table.insert(taInput.taData, taBlockSparseInput)
+  end
+
+	return taInput
+
+end
+
 
 function CDataLoader:loadSparseMetaInfo()
   local strFilename = self.exprSettings.strFilenameMetaInfo

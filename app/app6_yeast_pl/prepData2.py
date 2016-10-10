@@ -9,8 +9,8 @@ import os
 sys.path.append('../..')
 import prepLib
 
-in_strFastaFilename = '{!s}/data/protein/sigma_49/Sigma_49_sequence.fasta'.format(os.environ.get('HOME'))
-in_strPeptideFilename = '{!s}/data/protein/sigma_49/Sigma_49.txt'.format(os.environ.get('HOME'))
+in_strFastaFilename = '{!s}/data/protein/yeast/sc_SGD_0604.fasta'.format(os.environ.get('HOME'))
+in_strPeptideFilename = '{!s}/data/protein/yeast/Yeast_dataset_peptide_identification.txt'.format(os.environ.get('HOME'))
 in_strProtRefsDir = './protRefs'
 out_strOutputBaseDir = './sparseData2'
 
@@ -18,7 +18,7 @@ prepLib.breakFasta(in_strFastaFilename, in_strProtRefsDir, 0)
 listProtRefFileName = prepLib.getProtRefFileNames(in_strProtRefsDir)
 
 # load peptide probabilities
-listPepProb = prepLib.loadPepProbsFromCsv(in_strPeptideFilename, " ", 1, 3)
+listPepProb = prepLib.loadPepProbsFromCsv(in_strPeptideFilename, "\t", 0, 2)
 listPepProb = prepLib.consolidatePepProbs(listPepProb)
 
 
