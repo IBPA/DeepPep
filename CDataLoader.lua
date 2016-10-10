@@ -82,7 +82,6 @@ end
 function CDataLoader:pri_sparseToBlockSparse(taSparseInput, nWidth)
 
   local taRes = { 
-									dDefault = torch.Tensor({1, 1, 1}):fill(0),
 									teRowIdx = nil,
 									teValue = nil}
 
@@ -106,6 +105,7 @@ function CDataLoader:loadBlockSparseInput()
 
   self.taMetaInfo = self:loadSparseMetaInfo()
 	local taInput = {nBatchSize = self.exprSettings.nRows,
+									 teDefault = torch.Tensor(1, 1, 1):fill(0),
 									 taData = {}}
   for key, taFileInfo in pairs(self.taMetaInfo) do
     local taSparseInput = self:loadSparseInputSingleV2(taFileInfo.strFilename)

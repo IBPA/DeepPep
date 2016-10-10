@@ -36,11 +36,11 @@ function CExperimentSparseBlock:train(nIteration)
   local teTarget = self.oDataLoader:loadTarget()
 
 
-	print("waiting for 20 seconds ...")
-	os.execute("sleep 20" )
-	print("done")
-
-	deposUtil.printBlockSparseInput(taInput)
+	-- ToDo: now doing simple single forward, backward for until fully implemented
+	local taOutput = self.mNet:forward(taInput)
+	local taCopyRand = deposUtil.getCopyRandomizedBlocks(taOutput)
+	local taGradInput = self.mNet:backward(taInput, taCopyRand)
+	deposUtil.printBlockSparseInput(taGradInput)
 
   -- 3) Train
 	--[[
