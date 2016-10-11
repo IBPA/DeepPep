@@ -1,8 +1,10 @@
 # DePos
 
-There are two main requirements 
+Requirements 
 * python3.4/python3.5 
 * torch7
+* git clone https://github.com/ameenetemady/MyCommon # includes some utility code
+* git clone https://github.com/ameenetemady/depos #this repository
 
 Running DePos consists of three main steps:
 ##Step 1 - Data Preparation (generating sparse input format)#
