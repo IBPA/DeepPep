@@ -1,9 +1,13 @@
 do
 	local deposUtil = {}
 
-	function deposUtil.printBlockSparseInput(taInput)
+	function deposUtil.printSparseBlockInput(taInput)
 		local taData = taInput.taData
-		print("teDefault:" .. tostring(taInput.teDefault:squeeze(3)))
+
+		if taInput.teDefault ~= nil then
+			print("teDefault:" .. tostring(taInput.teDefault:squeeze(3)))
+		end
+
 		for i=1, #taData do
 			
 			io.write(string.format("#%d: ", i))
@@ -12,7 +16,7 @@ do
 		end
 	end
 
-	function deposUtil.mulBlockSparseInput(taInput, dValue)
+	function deposUtil.mulSparseBlockInput(taInput, dValue)
 		taInput.teDefault:mul(dValue)
 
 		local taData = taInput.taData

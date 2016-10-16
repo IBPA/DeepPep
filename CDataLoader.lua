@@ -79,7 +79,7 @@ function pri_getBlockRowIdx(taSparseInput)
 		return teBlockRowIdx, taBlockRowReverseMap
 end
 
-function CDataLoader:pri_sparseToBlockSparse(taSparseInput, nWidth)
+function CDataLoader:pri_sparseToSparseBlock(taSparseInput, nWidth)
 
   local taRes = { 
 									teRowIdx = nil,
@@ -101,7 +101,7 @@ function CDataLoader:pri_sparseToBlockSparse(taSparseInput, nWidth)
 	return taRes
 end
 
-function CDataLoader:loadBlockSparseInput()
+function CDataLoader:loadSparseBlockInput()
 
   self.taMetaInfo = self:loadSparseMetaInfo()
 	local taInput = {nBatchSize = self.exprSettings.nRows,
@@ -109,9 +109,9 @@ function CDataLoader:loadBlockSparseInput()
 									 taData = {}}
   for key, taFileInfo in pairs(self.taMetaInfo) do
     local taSparseInput = self:loadSparseInputSingleV2(taFileInfo.strFilename)
-		local taBlockSparseInput = self:pri_sparseToBlockSparse(taSparseInput, taFileInfo.nWidth)
+		local taSparseBlockInput = self:pri_sparseToSparseBlock(taSparseInput, taFileInfo.nWidth)
 
-    table.insert(taInput.taData, taBlockSparseInput)
+    table.insert(taInput.taData, taSparseBlockInput)
   end
 
 	return taInput

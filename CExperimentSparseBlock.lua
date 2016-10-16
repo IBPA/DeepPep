@@ -29,7 +29,7 @@ function CExperimentSparseBlock:train(nIteration)
   local nIteration = nIteration or 20
 
   -- 1) load input
-	local taInput = self.oDataLoader:loadBlockSparseInput(self.taMetaInfo)
+	local taInput = self.oDataLoader:loadSparseBlockInput(self.taMetaInfo)
 
 
   -- 2) Load the Target
@@ -40,7 +40,7 @@ function CExperimentSparseBlock:train(nIteration)
 	local taOutput = self.mNet:forward(taInput)
 	local taCopyRand = deposUtil.getCopyRandomizedBlocks(taOutput)
 	local taGradInput = self.mNet:backward(taInput, taCopyRand)
-	deposUtil.printBlockSparseInput(taGradInput)
+	deposUtil.printSparseBlockInput(taGradInput)
 
   -- 3) Train
 	--[[
