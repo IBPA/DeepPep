@@ -3,15 +3,18 @@ do
 
 	function deposUtil.printSparseBlockInput(taInput)
 		local taData = taInput.taData
+		local nDim = 3 
 
 		if taInput.teDefault ~= nil then
+			nDim = taInput.teDefault:dim()
 			print("teDefault:" .. tostring(taInput.teDefault:squeeze(3)))
 		end
 
 		for i=1, #taData do
 			
+			nDim = taData[i].teValue:dim()
 			io.write(string.format("#%d: ", i))
-			print(taData[i].teValue:squeeze(3))
+			print(taData[i].teValue:squeeze(nDim))
 
 		end
 	end
