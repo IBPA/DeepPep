@@ -12,6 +12,8 @@ require('../SparseBlockReLU.lua')
 require '../SparseBlockTemporalConvolution.lua'
 require '../SparseBlockTemporalMaxPooling.lua'
 require '../SparseBlockFlattenDim3.lua'
+require '../SparseBlockLinear.lua'
+require '../SparseBlockToDenseLinear.lua'
 local deposUtil = deposUtil or require('../deposUtil.lua')
 
 local sparseBlockTensor_test = {}
@@ -19,7 +21,7 @@ local sparseBlockTensor_test = {}
 local taInput1 = { teDefault = torch.Tensor(1, 1, 1):fill(0),
 									 nBatchSize = 4,
 									 taData = {
-										 { teRowIdx = torch.LongTensor({2, 4}),
+										 { teRowIdx = torch.LongTensor({{2}, {4}}),
 										 	 teValue = torch.Tensor({{{0, 0, 1, 1, 1, 1, 0},
 											 												{1, 1, 1, -10, 0, 0, 0}}}) },
 										 { teRowIdx = torch.LongTensor({2}),
@@ -29,24 +31,33 @@ local taInput1 = { teDefault = torch.Tensor(1, 1, 1):fill(0),
 
 local taInput2 = { nBatchSize = 4,
 									 taData = {
-										 { teRowIdx = torch.LongTensor({2, 4}),
+										 { teRowIdx = torch.LongTensor({{2}, {4}}),
 										 	 teValue = torch.Tensor({{{1}, {1}, {1}, {1}, {1}, {1}, {1}},
 											 												{{1}, {1}, {1}, {2}, {0}, {0}, {0}}}) },
-										 { teRowIdx = torch.LongTensor({2}),
+										 { teRowIdx = torch.LongTensor({{2}}),
 										 	 teValue = torch.Tensor({ {{0}, {-1}, {1} }}) }
 										}
 									}
 
 local taInput3 = { nBatchSize = 4,
 									 taData = {
-										 { teRowIdx = torch.LongTensor({2, 4}),
+										 { teRowIdx = torch.LongTensor({{2}, {4}}),
 										 	 teValue = torch.Tensor({{{1, 10}, {1, 10}, {1, 10}, {1, 10}, {1, 10}, {1, 10}, {1, 10}},
 											 												{{1, 10}, {1, 10}, {1, 10}, {2, 20}, {0, 0}, {0, 0}, {0, 0}}}) },
-										 { teRowIdx = torch.LongTensor({2}),
+										 { teRowIdx = torch.LongTensor({{2}}),
 										 	 teValue = torch.Tensor({ {{0, 0}, {-1, -10}, {1, 10} }}) }
 										}
 									}
 
+local taInput4 = { nBatchSize = 8,
+									 taData = {
+										 { teRowIdx = torch.LongTensor({{2}, {4}}),
+										 	 teValue = torch.Tensor({{{1, 10}, {1, 10}, {1, 10}, {1, 10}, {1, 10}, {1, 10}, {1, 10}},
+											 												{{1, 10}, {1, 10}, {1, 10}, {2, 20}, {0, 0}, {0, 0}, {0, 0}}}) },
+										 { teRowIdx = torch.LongTensor({{4}}),
+										 	 teValue = torch.Tensor({ {{0, 0}, {-1, -10}, {1, 10} }}) }
+										}
+									}
 
 function sparseBlockTensor_test.ReLU_test1()
 	local mNet = nn.SparseBlockReLU()
@@ -244,6 +255,118 @@ function sparseBlockTensor_test.SparseBlockFlattenDim3_test2()
 	print(teGradInput)
 end
 
+function sparseBlockTensor_test.SparseBlockLinear_test1()
+	local taInput = taInput3
+	local mLinear = nn.SparseBlockLinear(2)
+	local mSeq = nn.Sequential()
+	mSeq:add(nn.SparseBlockFlattenDim3())
+	mSeq:add(mLinear)
+	local taOutput = mSeq:forward(taInput)
+	deposUtil.printSparseBlockInput(taOutput)
+
+end
+
+function sparseBlockTensor_test.SparseBlockLinear_test2()
+	local taInput = taInput3
+	print("===== mSeq ====")
+	local mLinear = nn.SparseBlockLinear(2)
+	local mSeq = nn.Sequential()
+	mSeq:add(nn.SparseBlockFlattenDim3())
+	mSeq:add(mLinear)
+	local taOutput = mSeq:forward(taInput)
+--	deposUtil.printSparseBlockInput(taOutput)
+	local taGradInput = mSeq:updateGradInput(taInput, taOutput)
+	deposUtil.printSparseBlockInput(taGradInput)
+
+	print("===== mSeqMain ====")
+
+	local mLinearMain = nn.Linear(14, 2)
+	mLinearMain.bias:fill(0)
+	mLinearMain.weight:copy(mLinear:pri_getSubWeight(1):t())
+	local mSeqMain = nn.Sequential()
+	mSeqMain:add(nn.View(2, -1))
+	mSeqMain:add(mLinearMain)
+
+	local teOutput = mSeqMain:forward(taInput.taData[1].teValue)
+--	print(teOutput)
+	local teGradInput = mSeqMain:updateGradInput(taInput.taData[1].teValue, teOutput)
+	print(teGradInput)
+
+end
+
+
+function sparseBlockTensor_test.SparseBlockLinear_test3()
+	local scale = 1
+	local taInput = taInput3
+	print("===== mSeq ====")
+	local mLinear = nn.SparseBlockLinear(2)
+	local mSeq = nn.Sequential()
+	mSeq:add(nn.SparseBlockFlattenDim3())
+	mSeq:add(mLinear)
+	local taOutput = mSeq:forward(taInput)
+	mSeq:accGradParameters(taInput, taOutput, scale)
+	print(mLinear:pri_getSubGradWieght(1):t())
+
+	print("===== mSeqMain ====")
+
+	local mLinearMain = nn.Linear(14, 2)
+	mLinearMain.bias:fill(0)
+	mLinearMain.weight:copy(mLinear:pri_getSubWeight(1):t())
+	local mSeqMain = nn.Sequential()
+	mSeqMain:add(nn.View(2, -1))
+	mSeqMain:add(mLinearMain)
+
+	local teOutput = mSeqMain:forward(taInput.taData[1].teValue)
+	mSeqMain:accGradParameters(taInput.taData[1].teValue, teOutput, scale)
+	print(mLinearMain.gradWeight)
+
+end
+
+function sparseBlockTensor_test.SparseBlockLinear_test4()
+	local scale = 1
+	local taInput = taInput3
+	print("===== mSeq ====")
+	local mLinear = nn.SparseBlockLinear(1)
+	local mSeq = nn.Sequential()
+	mSeq:add(nn.SparseBlockFlattenDim3())
+	mSeq:add(mLinear)
+	local taOutput = mSeq:forward(taInput)
+	deposUtil.printSparseBlockInput(taOutput)
+end
+
+function sparseBlockTensor_test.SparseBlockToDenseLinear_test1()
+	local scale = 1
+	local taInput = taInput4
+
+	print("===== mSeq ====")
+	local mDenseToLinear = nn.SparseBlockToDenseLinear(2)
+	local mSeq = nn.Sequential()
+	mSeq:add(nn.SparseBlockFlattenDim3())
+	mSeq:add(mDenseToLinear)
+	local teOutput = mSeq:forward(taInput)
+	print(teOutput)
+
+	print("===== mSeqMain ====")
+	local mLinearMain = nn.Linear(14, 2)
+	mLinearMain.bias:fill(0)
+	mLinearMain.weight:copy(mDenseToLinear:pri_getSubWeight(1):t())
+	local mSeqMain = nn.Sequential()
+	mSeqMain:add(nn.View(2, -1))
+	mSeqMain:add(mLinearMain)
+	local teOutput = mSeqMain:forward(taInput.taData[1].teValue)
+	print(teOutput)
+
+	print("===== mSeqMain2 ====")
+	local mLinearMain2 = nn.Linear(6, 2)
+	mLinearMain2.bias:fill(0)
+	mLinearMain2.weight:copy(mDenseToLinear:pri_getSubWeight(2):t())
+	local mSeqMain2 = nn.Sequential()
+	mSeqMain2:add(nn.View(1, -1))
+	mSeqMain2:add(mLinearMain2)
+	local teOutput2 = mSeqMain2:forward(taInput.taData[2].teValue)
+	print(teOutput2)
+
+end
 
 --sparseBlockTensor_test.ReLU_test1()
 --sparseBlockTensor_test.TemporalConvolution_test1()
@@ -252,4 +375,9 @@ end
 --sparseBlockTensor_test.TemporalConvolution_test4()
 --sparseBlockTensor_test.TemporalMaxPooling_test1()
 --sparseBlockTensor_test.TemporalMaxPooling_test2()
-sparseBlockTensor_test.SparseBlockFlattenDim3_test1()
+--sparseBlockTensor_test.SparseBlockFlattenDim3_test1()
+--sparseBlockTensor_test.SparseBlockLinear_test1()
+--sparseBlockTensor_test.SparseBlockLinear_test2()
+--sparseBlockTensor_test.SparseBlockLinear_test3()
+--sparseBlockTensor_test.SparseBlockLinear_test4()
+sparseBlockTensor_test.SparseBlockToDenseLinear_test1()
