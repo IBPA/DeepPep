@@ -54,7 +54,7 @@ local taInput4 = { nBatchSize = 8,
 										 { teRowIdx = torch.LongTensor({{2}, {4}}),
 										 	 teValue = torch.Tensor({{{1, 10}, {1, 10}, {1, 10}, {1, 10}, {1, 10}, {1, 10}, {1, 10}},
 											 												{{1, 10}, {1, 10}, {1, 10}, {2, 20}, {0, 0}, {0, 0}, {0, 0}}}) },
-										 { teRowIdx = torch.LongTensor({{4}}),
+										 { teRowIdx = torch.LongTensor({{8}}),
 										 	 teValue = torch.Tensor({ {{0, 0}, {-1, -10}, {1, 10} }}) }
 										}
 									}
@@ -305,7 +305,7 @@ function sparseBlockTensor_test.SparseBlockLinear_test3()
 	mSeq:add(mLinear)
 	local taOutput = mSeq:forward(taInput)
 	mSeq:accGradParameters(taInput, taOutput, scale)
-	print(mLinear:pri_getSubGradWieght(1):t())
+	print(mLinear:pri_getSubGradWeight(1):t())
 
 	print("===== mSeqMain ====")
 
@@ -368,6 +368,66 @@ function sparseBlockTensor_test.SparseBlockToDenseLinear_test1()
 
 end
 
+function sparseBlockTensor_test.SparseBlockToDenseLinear_test2()
+	local scale = 1
+	local taInput = taInput4
+
+	print("===== mSeq ====")
+	local mDenseToLinear = nn.SparseBlockToDenseLinear(2)
+	local mSeq = nn.Sequential()
+	mSeq:add(nn.SparseBlockFlattenDim3())
+	mSeq:add(mDenseToLinear)
+	local teOutput = mSeq:forward(taInput)
+	local taGradInput = mSeq:updateGradInput(taInput, teOutput)
+	deposUtil.printSparseBlockInput(taGradInput)
+
+	print("===== mSeqMain ====")
+	local mLinearMain = nn.Linear(14, 2)
+	mLinearMain.bias:fill(0)
+	mLinearMain.weight:copy(mDenseToLinear:pri_getSubWeight(1):t())
+	local mSeqMain = nn.Sequential()
+	mSeqMain:add(nn.View(2, -1))
+	mSeqMain:add(mLinearMain)
+	local teOutput = mSeqMain:forward(taInput.taData[1].teValue)
+	local teGradInput = mSeqMain:updateGradInput(taInput.taData[1].teValue, teOutput)
+	print(teGradInput)
+end
+
+function sparseBlockTensor_test.SparseBlockToDenseLinear_test3()
+	torch.manualSeed(1)
+	local scale = 0.1
+	local taInput = taInput4
+
+	print("===== mSeq ====")
+	local mDenseToLinear = nn.SparseBlockToDenseLinear(2)
+	local mSeq = nn.Sequential()
+	mSeq:add(nn.SparseBlockFlattenDim3())
+	mSeq:add(mDenseToLinear)
+	teOutput = mSeq:forward(taInput)
+	mSeq:accGradParameters(taInput, teOutput, scale)
+	teOutput = mSeq:forward(taInput)
+
+	mSeq:accGradParameters(taInput, teOutput, scale)
+	print(mDenseToLinear:pri_getSubGradWeight(1))
+--	print(mDenseToLinear:pri_getSubWeight(1))
+
+
+	print("===== mSeqMain ====")
+	local mLinearMain = nn.Linear(14, 2)
+	mLinearMain.bias:fill(0)
+	mLinearMain.weight:copy(mDenseToLinear:pri_getSubWeight(1):t())
+	local mSeqMain = nn.Sequential()
+	mSeqMain:add(nn.View(2, -1))
+	mSeqMain:add(mLinearMain)
+	local teOutput = mSeqMain:forward(taInput.taData[1].teValue)
+	mSeqMain:accGradParameters(taInput.taData[1].teValue, teOutput, scale)
+	teOutput = mSeqMain:forward(taInput.taData[1].teValue)
+
+	mSeqMain:accGradParameters(taInput.taData[1].teValue, teOutput, scale)
+	print(mLinearMain.gradWeight:t())
+--	print(mLinearMain.weight:t())
+
+end
 --sparseBlockTensor_test.ReLU_test1()
 --sparseBlockTensor_test.TemporalConvolution_test1()
 --sparseBlockTensor_test.TemporalConvolution_test2()
@@ -380,4 +440,6 @@ end
 --sparseBlockTensor_test.SparseBlockLinear_test2()
 --sparseBlockTensor_test.SparseBlockLinear_test3()
 --sparseBlockTensor_test.SparseBlockLinear_test4()
-sparseBlockTensor_test.SparseBlockToDenseLinear_test1()
+--sparseBlockTensor_test.SparseBlockToDenseLinear_test1()
+--sparseBlockTensor_test.SparseBlockToDenseLinear_test2()
+sparseBlockTensor_test.SparseBlockToDenseLinear_test3()

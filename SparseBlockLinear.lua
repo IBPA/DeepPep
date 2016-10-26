@@ -50,7 +50,7 @@ function SparseBlockLinear:pri_getSubWeight(i)
 	return self:pri_getSubW(i, self.weight)
 end
 
-function SparseBlockLinear:pri_getSubGradWieght(i)
+function SparseBlockLinear:pri_getSubGradWeight(i)
 	return self:pri_getSubW(i, self.gradWeight)
 end
 
@@ -157,6 +157,6 @@ function SparseBlockLinear:accGradParameters(input, gradOutput, scale)
 	for i=1, nColumns do
 		self:pri_accGradWeight_column(input.taData[i],
 																	gradOutput.taData[i],
-																	self:pri_getSubGradWieght(i), scale)
+																	self:pri_getSubGradWeight(i), scale)
 	end
 end
