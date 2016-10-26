@@ -76,6 +76,7 @@ function pri_getBlockRowIdx(taSparseInput)
 				taBlockRowReverseMap[teBlockRowIdx[i]] = i
 		end
 
+		teBlockRowIdx:resize(teBlockRowIdx:size(1), 1) -- resize to add second dimension (necessary in SparseBlockToDenseLinear)
 		return teBlockRowIdx, taBlockRowReverseMap
 end
 
@@ -105,7 +106,7 @@ function CDataLoader:loadSparseBlockInput()
 
   self.taMetaInfo = self:loadSparseMetaInfo()
 	local taInput = {nBatchSize = self.exprSettings.nRows,
-									 teDefault = torch.Tensor(1, 1, 1):fill(0),
+--									 teDefault = torch.Tensor(1, 1, 1):fill(0),
 									 taData = {}}
   for key, taFileInfo in pairs(self.taMetaInfo) do
     local taSparseInput = self:loadSparseInputSingleV2(taFileInfo.strFilename)

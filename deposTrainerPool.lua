@@ -20,9 +20,9 @@ do
 
     if taTrainParam.strOptimMethod == "SGD" then
       taTrainParam.taOptimParams = { 
-        learningRate = 0.05,
-        learningRateDecay = 0.995,
-        momentum = 0.9 }
+        learningRate = 0.9,
+--        learningRateDecay = 0.995,
+        momentum = 0.5 }
       taTrainParam.fuOptim = optim.sgd
   
     elseif taTrainParam.strOptimMethod == "LBFGS" then
@@ -47,6 +47,7 @@ do
     parameters, gradParameters = mNet:getParameters()
     local criterion = taTrainParam.criterion
     local overallErr = 0
+		local scale = taTrainParam.taOptimParams.learningRate or 1
 
       local fuEval = function(x)
         collectgarbage()
@@ -64,8 +65,8 @@ do
         local f = criterion:forward(tePredY, teY)
 
         -- estimate df/dW
-        local df_do = criterion:backward(tePredY, teY)
-        mNet:backward(taX, df_do)
+        local df_do = criterion:backward(tePredY, teY, scale)
+        mNet:backward(taX, df_do, scale)
 
        -- penalties (L1 and L2):
         if taTrainParam.coefL1 ~= 0 or taTrainParam.coefL2 ~= 0 then
@@ -102,7 +103,7 @@ do
 
   function trainerPool.trainSparseInputNet(mNet, taInput, teTarget, nMaxIteration)
     local criterion = nn.MSECriterion()
-    local taTrainParam = trainerPool.getDefaultTrainParams(teTarget:size(1),"CG", nMaxIteration )
+    local taTrainParam = trainerPool.getDefaultTrainParams(teTarget:size(1),"SGD", nMaxIteration )
 
     local errPrev = math.huge
     local errCurr = math.huge
@@ -111,17 +112,17 @@ do
       errCurr = trainerPool.pri_trainSparseInputNet_SingleRound(mNet, taInput, teTarget, taTrainParam)
 
 --      --[[
-      if errPrev <= errCurr or myUtil.isNan(errCurr)  then
-        print("** early stop **")
-        return errPrev
-      elseif errCurr ~= nil then
+--      if errPrev <= errCurr or myUtil.isNan(errCurr)  then
+--        print("** early stop **")
+--        return errPrev
+--      elseif errCurr ~= nil then
         local message = errCurr < errPrev and "<" or "!>"
         myUtil.log(message, false, taTrainParam.isLog)
         myUtil.log(errCurr, false, taTrainParam.isLog)
         errPrev = errCurr
-      else
-        error("invalid value for errCurr!")
-      end
+--      else
+--        error("invalid value for errCurr!")
+--      end
       --]]
 
     end

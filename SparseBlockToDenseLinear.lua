@@ -137,7 +137,6 @@ function SparseBlockToDenseLinear:pri_updateGradInput_column(taInput, teGradOutp
 	local nRows = taInput.teValue:size(1)
 	local teGradOutputSelected = self.outputBufferA:narrow(1, 1, nRows)
 	local teDstIdx = torch.expand(taInput.teRowIdx, nRows, self.nOutputWidth)
-	print(teDstIdx)
 	teGradOutputSelected:gather(teGradOutput, 1, teDstIdx)
 
 	-- calculate and update gradInput

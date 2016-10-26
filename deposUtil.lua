@@ -20,7 +20,9 @@ do
 	end
 
 	function deposUtil.mulSparseBlockInput(taInput, dValue)
-		taInput.teDefault:mul(dValue)
+		if taInput.teDefault ~= nil then
+			taInput.teDefault:mul(dValue)
+		end
 
 		local taData = taInput.taData
 		for i=1, #taData do
@@ -29,8 +31,11 @@ do
 	end
 
 	function deposUtil.getCopyRandomizedBlocks(taInput)
-		local taRes = { teDefault = torch.rand(taInput.teDefault:size()),
-										taData = {}}
+		local taRes = { taData = {}}
+
+		if taInput.teDefault ~= nil then
+			taRes.teDefault = torch.rand(taInput.teDefault:size())
+		end
 
 		local taData = taInput.taData
 		for i=1, #taData do

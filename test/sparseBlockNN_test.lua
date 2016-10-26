@@ -204,6 +204,19 @@ function sparseBlockTensor_test.TemporalMaxPooling_test2()
 	print(teGradInput)
 end
 
+function sparseBlockTensor_test.ConvMaxPool_test1()
+	local scale = 1
+	print("======= mConv =======")
+	local taInput = taInput3
+	local mSeq = nn.Sequential()
+	local mConv1 = nn.SparseBlockTemporalConvolution(2, 4, 2, 1)
+	mSeq:add(mConv1)
+	mSeq:add(nn.SparseBlockTemporalMaxPooling(2))
+
+	local taOutput = mSeq:forward(taInput)
+	deposUtil.printSparseBlockInput(taOutput)
+end
+
 function sparseBlockTensor_test.SparseBlockFlattenDim3_test1()
 	local taInput = taInput3
 
@@ -435,6 +448,7 @@ end
 --sparseBlockTensor_test.TemporalConvolution_test4()
 --sparseBlockTensor_test.TemporalMaxPooling_test1()
 --sparseBlockTensor_test.TemporalMaxPooling_test2()
+--sparseBlockTensor_test.ConvMaxPool_test1()
 --sparseBlockTensor_test.SparseBlockFlattenDim3_test1()
 --sparseBlockTensor_test.SparseBlockLinear_test1()
 --sparseBlockTensor_test.SparseBlockLinear_test2()
@@ -442,4 +456,4 @@ end
 --sparseBlockTensor_test.SparseBlockLinear_test4()
 --sparseBlockTensor_test.SparseBlockToDenseLinear_test1()
 --sparseBlockTensor_test.SparseBlockToDenseLinear_test2()
-sparseBlockTensor_test.SparseBlockToDenseLinear_test3()
+--sparseBlockTensor_test.SparseBlockToDenseLinear_test3()

@@ -14,7 +14,7 @@ function SparseBlockTemporalConvolution:__init(inputFrameSize, outputFrameSize, 
 
    self.weight = torch.Tensor(outputFrameSize, inputFrameSize*kW)
    self.gradWeight = torch.Tensor(outputFrameSize, inputFrameSize*kW)
-	 self.dummyGradBias = torch.zeros(outputFrameSize)
+	 self.dummyBias = torch.zeros(outputFrameSize)
    
    self:reset()
 end
@@ -74,21 +74,15 @@ function SparseBlockTemporalConvolution:pri_ensureGradInput(input)
 end
 
 function SparseBlockTemporalConvolution:pri_updateOutput_column(taInput, taOutput)
-	local nOutputWidth =  taOutput.teValue:size(2)
-	local nInputWidth = taInput.teValue:size(2)
-	local nRows = taOutput.teValue:size(1)
+	local input = taInput.teValue
+	local output = taOutput.teValue
 
-	-- ouch
-	for k=1, nOutputWidth do
-		local teOutputWindow = taOutput.teValue:select(2, k)
-
-		local teInput2d = taInput.teValue:view(nRows, self.inputFrameSize * nInputWidth)
-		local nInputOffset = (self.dW * (k-1) + 1) * self.inputFrameSize -1
-		local teInputWindow = teInput2d:narrow(2, nInputOffset, self.inputFrameSize * self.kW)
-
-		teOutputWindow:addmm(teInputWindow, self.weight:t())
-	end
-	
+    input.THNN.TemporalConvolution_updateOutput(
+			input:cdata(), output:cdata(),
+			self.weight:cdata(), self.dummyBias:cdata(),
+			self.kW, self.dW,
+			self.inputFrameSize, self.outputFrameSize
+    )
 end
 
 function SparseBlockTemporalConvolution:updateOutput(input)
@@ -139,7 +133,7 @@ function SparseBlockTemporalConvolution:pri_accGradParameters_column(taInput, ta
 
   input.THNN.TemporalConvolution_accGradParameters(
        input:cdata(), gradOutput:cdata(),
-       self.gradWeight:cdata(), self.dummyGradBias:cdata(),
+       self.gradWeight:cdata(), self.dummyBias:cdata(),
        self.kW, self.dW, scale
    )
 
