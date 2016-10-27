@@ -14,6 +14,8 @@ require '../SparseBlockTemporalMaxPooling.lua'
 require '../SparseBlockFlattenDim3.lua'
 require '../SparseBlockLinear.lua'
 require '../SparseBlockToDenseLinear.lua'
+require '../SparseBlockDropout.lua'
+
 local deposUtil = deposUtil or require('../deposUtil.lua')
 
 local sparseBlockTensor_test = {}
@@ -441,6 +443,20 @@ function sparseBlockTensor_test.SparseBlockToDenseLinear_test3()
 --	print(mLinearMain.weight:t())
 
 end
+
+function sparseBlockTensor_test.SparseBlockDropout_test1()
+	torch.manualSeed(2)
+	local taInput = taInput4
+	local mDropout = nn.SparseBlockDropout(0.01)
+	local taOutput = mDropout:forward(taInput)
+	print("======= taOutput ======")
+	deposUtil.printSparseBlockInput(taOutput)
+	local taGradInput = mDropout:updateGradInput(taInput, taOutput)
+	print("======= taGradInput ======")
+	deposUtil.printSparseBlockInput(taGradInput)
+
+end
+
 --sparseBlockTensor_test.ReLU_test1()
 --sparseBlockTensor_test.TemporalConvolution_test1()
 --sparseBlockTensor_test.TemporalConvolution_test2()
@@ -457,3 +473,4 @@ end
 --sparseBlockTensor_test.SparseBlockToDenseLinear_test1()
 --sparseBlockTensor_test.SparseBlockToDenseLinear_test2()
 --sparseBlockTensor_test.SparseBlockToDenseLinear_test3()
+sparseBlockTensor_test.SparseBlockDropout_test1()
