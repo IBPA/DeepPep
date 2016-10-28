@@ -21,8 +21,8 @@ do
     if taTrainParam.strOptimMethod == "SGD" then
       taTrainParam.taOptimParams = { 
         learningRate = 0.9,
---        learningRateDecay = 0.995,
-        momentum = 0.5 }
+--        learningRateDecay = 0.999,
+        momentum = 0.9 }
       taTrainParam.fuOptim = optim.sgd
   
     elseif taTrainParam.strOptimMethod == "LBFGS" then
@@ -33,7 +33,7 @@ do
 
     elseif taTrainParam.strOptimMethod == "CG" then
       taTrainParam.taOptimParams = {
-        maxIter = 20 }
+        maxIter = 30 }
       taTrainParam.fuOptim = optim.cg
 
     else
@@ -101,9 +101,10 @@ do
     return fErr
   end
 
-  function trainerPool.trainSparseInputNet(mNet, taInput, teTarget, nMaxIteration)
+  function trainerPool.trainSparseInputNet(mNet, taInput, teTarget, nMaxIteration, strOptimMethod, isEarlyStop)
+		strOptimMethod = strOptimMethod or "SGD"
     local criterion = nn.MSECriterion()
-    local taTrainParam = trainerPool.getDefaultTrainParams(teTarget:size(1),"SGD", nMaxIteration )
+    local taTrainParam = trainerPool.getDefaultTrainParams(teTarget:size(1), strOptimMethod, nMaxIteration )
 
     local errPrev = math.huge
     local errCurr = math.huge
@@ -112,17 +113,19 @@ do
       errCurr = trainerPool.pri_trainSparseInputNet_SingleRound(mNet, taInput, teTarget, taTrainParam)
 
 --      --[[
---      if errPrev <= errCurr or myUtil.isNan(errCurr)  then
---        print("** early stop **")
---        return errPrev
---      elseif errCurr ~= nil then
+      if isEarlyStop and (errPrev <= errCurr or myUtil.isNan(errCurr))  then
+        print("** early stop **")
+        return errPrev
+			end
+
+      if errCurr ~= nil then
         local message = errCurr < errPrev and "<" or "!>"
         myUtil.log(message, false, taTrainParam.isLog)
         myUtil.log(errCurr, false, taTrainParam.isLog)
         errPrev = errCurr
---      else
---        error("invalid value for errCurr!")
---      end
+      else
+        error("invalid value for errCurr!")
+      end
       --]]
 
     end

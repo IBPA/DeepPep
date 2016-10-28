@@ -447,7 +447,7 @@ end
 function sparseBlockTensor_test.SparseBlockDropout_test1()
 	torch.manualSeed(2)
 	local taInput = taInput4
-	local mDropout = nn.SparseBlockDropout(0.01)
+	local mDropout = nn.SparseBlockDropout(0.91)
 	local taOutput = mDropout:forward(taInput)
 	print("======= taOutput ======")
 	deposUtil.printSparseBlockInput(taOutput)
