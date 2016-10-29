@@ -281,6 +281,59 @@ function sparseBlockTensor_test.SparseBlockLinear_test1()
 
 end
 
+function sparseBlockTensor_test.SparseBlockLinear_test5_bias()
+	local taInput = taInput3
+	print("---- input ---")
+	deposUtil.printSparseBlockInput(taInput)
+
+	local mLinear = nn.SparseBlockLinear(2, true)
+
+	local mSeq = nn.Sequential()
+	mSeq:add(nn.SparseBlockFlattenDim3())
+	mSeq:add(mLinear)
+	local taOutput = mSeq:forward(taInput) -- warmup
+	mLinear.weight:fill(1)
+	mLinear.bias:fill(0.1)
+	local taOutput = mSeq:forward(taInput)
+	print("---- output ---")
+	deposUtil.printSparseBlockInput(taOutput)
+
+	print("##### bias #####")
+	print(mLinear.bias)
+end
+
+function sparseBlockTensor_test.SparseBlockLinear_test6_bias()
+	local taInput = taInput3
+	print("---- input ---")
+	deposUtil.printSparseBlockInput(taInput)
+
+	local mLinear = nn.SparseBlockLinear(2, true)
+
+	local mSeq = nn.Sequential()
+	mSeq:add(nn.SparseBlockFlattenDim3())
+	mSeq:add(mLinear)
+	local taOutput = mSeq:forward(taInput) -- warmup
+	mLinear.weight:fill(0)
+	mLinear.bias:fill(0.1)
+	local taOutput = mSeq:forward(taInput)
+	taOutput.taData[1].teGradOutputCumSum = torch.Tensor({{1, 2}})
+	taOutput.taData[2].teGradOutputCumSum = torch.Tensor(1, 2):fill(1)
+
+	mSeq:accGradParameters(taInput, taOutput, 1)
+	mSeq:accGradParameters(taInput, taOutput, 1)
+	print("***** gradWeight, gradBias:")
+	print(mLinear.gradWeight)
+	print(mLinear.gradBias)
+	print("*****")
+
+	print("---- output ---")
+	deposUtil.printSparseBlockInput(taOutput)
+
+	print("##### bias #####")
+	print(mLinear.bias)
+end
+
+
 function sparseBlockTensor_test.SparseBlockLinear_test2()
 	local taInput = taInput3
 	print("===== mSeq ====")
@@ -470,7 +523,9 @@ end
 --sparseBlockTensor_test.SparseBlockLinear_test2()
 --sparseBlockTensor_test.SparseBlockLinear_test3()
 --sparseBlockTensor_test.SparseBlockLinear_test4()
+--sparseBlockTensor_test.SparseBlockLinear_test5_bias()
+sparseBlockTensor_test.SparseBlockLinear_test6_bias()
 --sparseBlockTensor_test.SparseBlockToDenseLinear_test1()
 --sparseBlockTensor_test.SparseBlockToDenseLinear_test2()
 --sparseBlockTensor_test.SparseBlockToDenseLinear_test3()
-sparseBlockTensor_test.SparseBlockDropout_test1()
+--sparseBlockTensor_test.SparseBlockDropout_test1()

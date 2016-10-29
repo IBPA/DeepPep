@@ -6,8 +6,8 @@
 local SparseBlockToDenseLinear, parent = torch.class('nn.SparseBlockToDenseLinear', 'nn.Module')
 
 function SparseBlockToDenseLinear:__init(nOutputWidth, bias)
-	bias = bias or false
-	assert(bias == false, "Only supporting zero bias for now!")
+	self.bias = bias or false
+	assert(self.bias == false, "Only supporting zero bias for now!")
 
 	self.nOutputWidth = nOutputWidth
 end

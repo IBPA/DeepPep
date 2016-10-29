@@ -13,8 +13,13 @@ do
 		for i=1, #taData do
 			
 			nDim = taData[i].teValue:dim()
-			io.write(string.format("#%d: ", i))
+			io.write(string.format("#%d(non-sparse): \n", i))
 			print(taData[i].teValue:squeeze(nDim))
+
+			if taData[i].teDefault ~= nil then
+				io.write(string.format("#%d(default): \n", i))
+				print(taData[i].teDefault)
+			end
 
 		end
 	end

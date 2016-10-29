@@ -53,8 +53,9 @@ function CExperiment:train(nIteration, isKeepData)
   local teTarget = self.oDataLoader:loadTarget()
 
   -- 3) Train
+	self.mNet:training()
   sys.tic()
-  local dTrainErr = trainerPool.trainSparseInputNet(self.mNet, taInput, teTarget, nIteration)
+  local dTrainErr = trainerPool.trainSparseInputNet(self.mNet, taInput, teTarget, nIteration, "CG", true)
   print("\ntraining error:" .. dTrainErr) 
   print("training elapsed time(s):" .. sys.toc())
 
@@ -138,6 +139,7 @@ function CExperiment:getConfidenceRange(nStart, nEnd)
   local nStart = nStart or 1
   local nEnd = nEnd or #self.taMetaInfo
 
+--	self.mNet:evaluate()
   local teOutputAll = self.mNet:forward(self.taInput):clone()
   local taMNetLayers = self:pri_getLayers()
   local teOutputFirst = taMNetLayers.mFirst:forward(self.taInput):clone()
