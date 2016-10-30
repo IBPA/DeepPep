@@ -7,7 +7,6 @@ local SparseBlockToDenseLinear, parent = torch.class('nn.SparseBlockToDenseLinea
 
 function SparseBlockToDenseLinear:__init(nOutputWidth, bias)
 	self.bias = bias or false
-	assert(self.bias == false, "Only supporting zero bias for now!")
 
 	self.nOutputWidth = nOutputWidth
 end
@@ -33,6 +32,11 @@ function SparseBlockToDenseLinear:pri_ensureWeight(input)
 	self.weight = torch.zeros(nTotalWeightSize, self.nOutputWidth)
 	self.gradWeight = torch.zeros(nTotalWeightSize, self.nOutputWidth)
 
+	if self.bias then
+		self.bias = torch.zeros(1, self.nOutputWidth)
+		self.gradBias = torch.zeros(1, self.nOutputWidth)
+	end
+
 	self:reset()
 end
 
@@ -45,6 +49,10 @@ function SparseBlockToDenseLinear:reset(stdv)
 		end
 
 		self.weight:uniform(-stdv, stdv)
+		
+		if self.bias then
+			self.bias:uniform(-stdv, stdv)
+		end
 end
 
 function SparseBlockToDenseLinear:pri_getSubW(i, teW)
@@ -81,8 +89,17 @@ end
 function SparseBlockToDenseLinear:pri_updateOutput_column(taInput, teWeight)
 --	self.outputBufferA:zero() -- no need to reset all to zero, only what's used here
 --	self.outputBufferB:zero() -- ToDo: possible optimization: instead of this, can scatter zero scalar to what's non-zero at the end
+	local nInputWidth = taInput.teDefault:size(1)
 
-	-- calculate the output for non-Sparse blocks
+	-- calculate output for teDefault input
+	if taInput.teDefault then
+		local teDefaultInputExpanded = taInput.teDefault:view(1, nInputWidth):expand(self.output:size(1), nInputWidth) -- expand for multiplication
+
+		self.outputBufferB:zero()
+		self.outputBufferB:addmm(teDefaultInputExpanded, teWeight) -- so this writes the default, but sparse blocks will be overwritten next
+	end
+
+	-- calculate the output for Sparse blocks
 	local teInput = taInput.teValue
 	local nRows = teInput:size(1)
 	local teOutput = self.outputBufferA:narrow(1, 1, nRows)
@@ -104,6 +121,13 @@ function SparseBlockToDenseLinear:updateOutput(input)
 	self:pri_ensureWeight(input)
 	self:pri_ensureOutput(input)
 	self.output:zero()
+
+	if self.bias then
+		local teBiasExpanded = self.bias:expand(self.output:size(1), self.nOutputWidth)
+		self.output:add(teBiasExpanded)
+	end
+
+
 
 	local nColumns = table.getn(input.taData)
 	for i=1, nColumns do
@@ -127,6 +151,11 @@ function SparseBlockToDenseLinear:pri_ensureGradInput(input)
 
 		taGradInputCurr = { teValue = torch.zeros(taInputCurr.teValue:size()),
 												teRowIdx = taInputCurr.teRowIdx }
+
+		if taInputCurr.teDefault then
+			taGradInputCurr.teGradOutputSum = torch.zeros(1, taInputCurr.teValue:size(2))
+		end
+
 		table.insert(self.gradInput.taData, taGradInputCurr)
 	end
 end
@@ -146,6 +175,12 @@ function SparseBlockToDenseLinear:pri_updateGradInput_column(taInput, teGradOutp
 
 	-- cleanup teGradOutputSelected
 	teGradOutputSelected:zero()
+
+	-- calculate gradOutput sum, then multiply by weights (just reordering optimization to save memory)
+	if taGradInput.teGradOutputSum then
+		local teGradOutputSum = teGradOutput:sum(1)
+		taGradInput.teGradOutputSum:mm(teGradOutputSum, teWeight:t())
+	end
 end
 
 function SparseBlockToDenseLinear:updateGradInput(input, gradOutput)
@@ -170,6 +205,21 @@ function SparseBlockToDenseLinear:pri_accGradWeight_column(taInput, teGradOutput
 	teGradOutputSelected:gather(teGradOutput, 1, teDstIdx)
 
   teGradWeight:t():addmm(scale, teGradOutputSelected:t(), taInput.teValue)
+
+	if taInput.teDefault then
+		-- a) use taInput.teDefault as if, 100 sparse
+		local nInputWidth = taInput.teDefault:size(1)
+		local teDefaultInputExpanded = taInput.teDefault:view(1, nInputWidth):expand(teGradOutput:size(1), nInputWidth)
+		teGradWeight:t():addmm(scale, teGradOutput:t(), teDefaultInputExpanded)
+
+		-- b) substrcat back extra teDefaults items added
+		teDefaultInputExpanded = taInput.teDefault:view(1, nInputWidth):expand(nRows, nInputWidth)
+  	teGradWeight:t():addmm(-scale, teGradOutputSelected:t(), taInput.teValue)
+	end
+
+	if self.bias then
+		self.gradBias:add(scale, teGradOutput:sum(1))
+	end
 
 	-- cleanup teGradOutputSelected
 	teGradOutputSelected:zero()

@@ -195,7 +195,7 @@ function SparseBlockLinear:pri_accGradWeight_column(taInput, taGradOutput, teGra
 	if teGradBias then
 		-- Note: only the sum of all gradOutputs are useful here, hence only that is backpropagated.
 		-- 			 i.e. due to zero inputs, gradOutputs with sparse inputs  are not useful anywhere else, and only their vertical sum is useful here.
-		teGradBias:add(scale, taGradOutput.teGradOutputCumSum)
+		teGradBias:add(scale, taGradOutput.teGradOutputSum)
 	end
 end
 

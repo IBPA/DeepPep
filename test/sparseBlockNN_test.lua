@@ -316,8 +316,8 @@ function sparseBlockTensor_test.SparseBlockLinear_test6_bias()
 	mLinear.weight:fill(0)
 	mLinear.bias:fill(0.1)
 	local taOutput = mSeq:forward(taInput)
-	taOutput.taData[1].teGradOutputCumSum = torch.Tensor({{1, 2}})
-	taOutput.taData[2].teGradOutputCumSum = torch.Tensor(1, 2):fill(1)
+	taOutput.taData[1].teGradOutputSum = torch.Tensor({{1, 2}})
+	taOutput.taData[2].teGradOutputSum = torch.Tensor(1, 2):fill(1)
 
 	mSeq:accGradParameters(taInput, taOutput, 1)
 	mSeq:accGradParameters(taInput, taOutput, 1)
@@ -497,6 +497,105 @@ function sparseBlockTensor_test.SparseBlockToDenseLinear_test3()
 
 end
 
+
+function sparseBlockTensor_test.SparseBlockToDenseLinear_test4_teDefault()
+	torch.manualSeed(2)
+	local taInput = taInput3
+	local mLinear = nn.SparseBlockLinear(2, true)
+	local mDenseToLinear = nn.SparseBlockToDenseLinear(2, true)
+	local mSeq = nn.Sequential()
+	local mFlatten = nn.SparseBlockFlattenDim3()
+	mSeq:add(mFlatten)
+	mSeq:add(mLinear)
+	mSeq:add(mDenseToLinear)
+
+-- warmup:
+	local taOutput = mSeq:forward(taInput)
+
+	-- set weights:
+	mLinear.weight:fill(-100)
+	mLinear.bias:fill(10)
+
+	mDenseToLinear.weight:fill(2)
+	mDenseToLinear.bias[1][1] = -0.1--:fill(-0.1)
+	mDenseToLinear.bias[1][2] = -0.2--:fill(-0.1)
+
+	print("======= mSeq =======")
+	local taOutput = mSeq:forward(taInput)
+
+	print("#### mFlatten output:")
+	deposUtil.printSparseBlockInput(mFlatten.output)
+
+	print("#### mLinear output:")
+	deposUtil.printSparseBlockInput(mLinear.output)
+
+	print("#### mDenseToLinear output:")
+	print(taOutput)
+--
+
+end
+
+function sparseBlockTensor_test.SparseBlockToDenseLinear_test5_teDefault()
+	torch.manualSeed(2)
+	local taInput = taInput3
+	local mLinear = nn.SparseBlockLinear(2, true)
+	local mDenseToLinear = nn.SparseBlockToDenseLinear(2, true)
+	local mSeq = nn.Sequential()
+	local mFlatten = nn.SparseBlockFlattenDim3()
+	mSeq:add(mFlatten)
+	mSeq:add(mLinear)
+	mSeq:add(mDenseToLinear)
+
+-- warmup:
+	local taOutput = mSeq:forward(taInput)
+
+	-- set weights:
+	mLinear.weight:fill(-100)
+	mLinear.bias:fill(10)
+
+	mDenseToLinear.weight:fill(2)
+	mDenseToLinear.bias[1][1] = -0.1--:fill(-0.1)
+	mDenseToLinear.bias[1][2] = -0.2--:fill(-0.1)
+
+	print("======= mSeq =======")
+	local taOutput = mSeq:forward(taInput)
+	local taGradInput = mSeq:updateGradInput(taInput, taOutput)
+	print(mDenseToLinear.gradInput.taData[2].teGradOutputSum)
+
+end
+function sparseBlockTensor_test.SparseBlockToDenseLinear_test6_teDefault()
+	torch.manualSeed(2)
+	local taInput = taInput3
+	local mLinear = nn.SparseBlockLinear(2, true)
+	local mDenseToLinear = nn.SparseBlockToDenseLinear(2, true)
+	local mSeq = nn.Sequential()
+	local mFlatten = nn.SparseBlockFlattenDim3()
+	mSeq:add(mFlatten)
+	mSeq:add(mLinear)
+	mSeq:add(mDenseToLinear)
+
+-- warmup:
+	local taOutput = mSeq:forward(taInput)
+
+	-- set weights:
+	mLinear.weight:fill(-100)
+	mLinear.bias:fill(10)
+
+	mDenseToLinear.weight:fill(2)
+	mDenseToLinear.bias[1][1] = -0.1--:fill(-0.1)
+	mDenseToLinear.bias[1][2] = -0.2--:fill(-0.1)
+
+	print("======= mSeq =======")
+	local teOutput = mSeq:forward(taInput)
+	local taGradInput = mSeq:updateGradInput(taInput, teOutput)
+	print("$$$$ before $$$")
+	print(mDenseToLinear.gradBias)
+	mSeq:accGradParameters(taInput, teOutput)
+	print("$$$$ after $$$")
+	print(mDenseToLinear.gradBias)
+end
+
+
 function sparseBlockTensor_test.SparseBlockDropout_test1()
 	torch.manualSeed(2)
 	local taInput = taInput4
@@ -524,8 +623,11 @@ end
 --sparseBlockTensor_test.SparseBlockLinear_test3()
 --sparseBlockTensor_test.SparseBlockLinear_test4()
 --sparseBlockTensor_test.SparseBlockLinear_test5_bias()
-sparseBlockTensor_test.SparseBlockLinear_test6_bias()
+--sparseBlockTensor_test.SparseBlockLinear_test6_bias()
 --sparseBlockTensor_test.SparseBlockToDenseLinear_test1()
 --sparseBlockTensor_test.SparseBlockToDenseLinear_test2()
 --sparseBlockTensor_test.SparseBlockToDenseLinear_test3()
+--sparseBlockTensor_test.SparseBlockToDenseLinear_test4_teDefault()
+--sparseBlockTensor_test.SparseBlockToDenseLinear_test5_teDefault()
+sparseBlockTensor_test.SparseBlockToDenseLinear_test6_teDefault()
 --sparseBlockTensor_test.SparseBlockDropout_test1()
