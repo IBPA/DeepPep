@@ -89,7 +89,7 @@ end
 function SparseBlockToDenseLinear:pri_updateOutput_column(taInput, teWeight)
 --	self.outputBufferA:zero() -- no need to reset all to zero, only what's used here
 --	self.outputBufferB:zero() -- ToDo: possible optimization: instead of this, can scatter zero scalar to what's non-zero at the end
-	local nInputWidth = taInput.teDefault:size(1)
+	local nInputWidth = taInput.teValue:size(2)
 
 	-- calculate output for teDefault input
 	if taInput.teDefault then
@@ -214,7 +214,7 @@ function SparseBlockToDenseLinear:pri_accGradWeight_column(taInput, teGradOutput
 
 		-- b) substrcat back extra teDefaults items added
 		teDefaultInputExpanded = taInput.teDefault:view(1, nInputWidth):expand(nRows, nInputWidth)
-  	teGradWeight:t():addmm(-scale, teGradOutputSelected:t(), taInput.teValue)
+  	teGradWeight:t():addmm(-scale, teGradOutputSelected:t(), teDefaultInputExpanded)
 	end
 
 	if self.bias then

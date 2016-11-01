@@ -101,13 +101,17 @@ do
     return fErr
   end
 
-  function trainerPool.trainSparseInputNet(mNet, taInput, teTarget, nMaxIteration, strOptimMethod, isEarlyStop)
+  function trainerPool.trainSparseInputNet(mNet, taInput, teTarget, nMaxIteration, strOptimMethod, isEarlyStop, dStopError)
 		strOptimMethod = strOptimMethod or "SGD"
     local criterion = nn.MSECriterion()
     local taTrainParam = trainerPool.getDefaultTrainParams(teTarget:size(1), strOptimMethod, nMaxIteration )
 
     local errPrev = math.huge
     local errCurr = math.huge
+		local errBest = math.huge
+		teParameters, teGradParameters = mNet:getParameters()
+		local teParametersBest = torch.Tensor(teParameters:size())
+		local dMinDiffToUpdate = 0.0001
 
     for i=1, taTrainParam.nMaxIteration do
       errCurr = trainerPool.pri_trainSparseInputNet_SingleRound(mNet, taInput, teTarget, taTrainParam)
@@ -116,6 +120,13 @@ do
       if isEarlyStop and (errPrev <= errCurr or myUtil.isNan(errCurr))  then
         print("** early stop **")
         return errPrev
+			end
+
+			if errCurr < (errBest - 0.001) then
+				print("updateing, error: " .. errCurr)
+				teParameters, teGradParameters = mNet:getParameters()
+				teParametersBest:copy(teParameters)
+				errBest = errCurr
 			end
 
       if errCurr ~= nil then
@@ -128,9 +139,17 @@ do
       end
       --]]
 
+			if dStopError ~= nil and errCurr < dStopError then
+				print(string.format("Reached error bellow: %f, therefore enough!", dStopError ))
+				break
+			end
+
     end
 
-    return errCurr
+		teParameters, teGradParameters = mNet:getParameters()
+		teParameters:copy(teParametersBest)
+
+    return errBest
   end
 
 

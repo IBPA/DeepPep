@@ -14,7 +14,8 @@ if isRetrain then
 
 	oExperiment:buildArch(dDropout, 4)
 	oExperiment:roundTrip()
-	oExperiment:train(400, "SGD", false, 0.001)
+	--oExperiment:train(400, "SGD", false)
+	oExperiment:train(200, "SGD", false)
   oExperiment:save(exprSetting.strFilenameExperiment1Obj)
 else
 	oExperiment = CExperimentSparseBlock.loadFromFile(exprSetting.strFilenameExperiment1Obj)

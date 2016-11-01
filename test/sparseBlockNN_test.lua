@@ -629,5 +629,112 @@ end
 --sparseBlockTensor_test.SparseBlockToDenseLinear_test3()
 --sparseBlockTensor_test.SparseBlockToDenseLinear_test4_teDefault()
 --sparseBlockTensor_test.SparseBlockToDenseLinear_test5_teDefault()
-sparseBlockTensor_test.SparseBlockToDenseLinear_test6_teDefault()
+--sparseBlockTensor_test.SparseBlockToDenseLinear_test6_teDefault()
 --sparseBlockTensor_test.SparseBlockDropout_test1()
+
+local taInput5 = { nBatchSize = 3,
+									 taData = 
+									{ 
+										 {	teRowIdx = torch.LongTensor{{1}, {3}},
+									 			teValue = torch.Tensor({{{1}}, {{3}}}) }
+								 	},
+								}
+
+local taInput6 = { nBatchSize = 1,
+									 taData = 
+									{ 
+										 {	teRowIdx = torch.LongTensor{{1}},
+									 			teValue = torch.Tensor({{{100}}}) }
+								 	},
+								}
+
+function printParams(m)
+	print("weight:")
+	print(m.weight)
+	print("bias:")
+	print(m.bias)
+end
+
+function printGradParams(m)
+	print("gradWeight:")
+	print(m.gradWeight)
+	print("gradBias:")
+	print(m.gradBias)
+end
+
+function matchGradParams(m1, m2)
+	local isGradWeightMatch = torch.all(torch.eq(m1.gradWeight, m2.gradWeight))
+	assert(isGradWeightMatch, "****** gradWeight don't match!")
+
+	local isGradBiasMatch = torch.all(torch.eq(m1.gradBias, m2.gradBias))
+	assert(isGradBiasMatch, "****** gradBias don't match!")
+end
+
+function matchTensors(teA, teB)
+	local isMatch = torch.all(torch.eq(teA, teB))
+	assert(isMatch, "--------- tensors don't match")
+end
+
+function sparseBlockTensor_test.SparseBlockToDenseLinear_test7_validate()
+	torch.manualSeed(1)
+	local taInput = taInput6
+
+	local teGradOutput = torch.ones(taInput.nBatchSize, 1)--:uniform(-1, 1)
+	local scale = 1
+
+	print("===== mSeq ====")
+	-- a) create arch
+	local mDenseToLinear = nn.SparseBlockToDenseLinear(1, true)
+	local mBlockLinear = nn.SparseBlockLinear(1, true)
+	local mSeq = nn.Sequential()
+	mSeq:add(nn.SparseBlockFlattenDim3())
+	mSeq:add(mBlockLinear)
+	mSeq:add(mDenseToLinear)
+
+	-- b) warmap
+	local teOutput = mSeq:forward(taInput)
+	mSeq:updateGradInput(taInput, teOutput:zero())
+
+	-- c) assign parameters
+	mBlockLinear.weight:fill(1)
+	mBlockLinear.bias:fill(1)
+	mDenseToLinear.weight:fill(1)
+	mDenseToLinear.bias:fill(1)
+
+	-- d) output
+	local teOutput = mSeq:forward(taInput)
+	local taGradInput = mSeq:backward(taInput, teGradOutput, scale)
+	--print(teOutput)
+	printGradParams(mDenseToLinear)
+
+	print("===== mSeqMain ====")
+	-- A) create arch
+	local mLinear = nn.Linear(1, 1)
+	local mLinearLast = nn.Linear(1, 1)
+	local mSeqMain = nn.Sequential()
+	mSeqMain:add(mLinear)
+	mSeqMain:add(mLinearLast)
+
+	-- B) prepare input
+	local nRows = teOutput:size(1)
+	local teInput = torch.Tensor(nRows, 1):fill(100)
+--	teInput[1][1] = 1
+--	teInput[3][1] = 3
+
+	-- C) assign parameters
+	mLinear.weight:copy(mBlockLinear.weight)
+	mLinear.bias:copy(mBlockLinear.bias)
+	mLinearLast.weight:copy(mDenseToLinear.weight)
+	mLinearLast.bias:copy(mDenseToLinear.bias)
+
+	local teOutputMain = mSeqMain:forward(teInput)
+	local taGradInput = mSeqMain:backward(teInput, teGradOutput, scale)
+--	print(teOutputMain)
+	printGradParams(mLinearLast)
+
+	matchTensors(teOutput, teOutputMain)
+--	matchGradParams(mBlockLinear, mLinear)
+	matchGradParams(mDenseToLinear, mLinearLast)
+end
+
+sparseBlockTensor_test.SparseBlockToDenseLinear_test7_validate()

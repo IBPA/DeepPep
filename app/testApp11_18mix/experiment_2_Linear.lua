@@ -2,24 +2,34 @@ require('../../CExperimentSparseBlock.lua')
 require '../../CDataLoader.lua'
 torch.manualSeed(1)
 
-torch.setdefaulttensortype('torch.FloatTensor')
 local exprSetting = require('./lSettings.lua')
 local oExperiment
 local isRetrain = true
 
+--[[
+	local oDataLoader = CDataLoader.new(exprSetting)
+	oExperiment = CExperimentSparseBlock.new(oDataLoader)
 
+	oExperiment:buildArch_Linear(0.6)
+
+	oExperiment:test()
+--]]
+
+----[[
 if isRetrain then
 	local oDataLoader = CDataLoader.new(exprSetting)
 	oExperiment = CExperimentSparseBlock.new(oDataLoader)
 
-	oExperiment:buildArch(dDropout, 4)
+	oExperiment:buildArch_Linear(0.6)
+
 	oExperiment:roundTrip()
-	oExperiment:train(400, "SGD", false, 0.001)
-  oExperiment:save(exprSetting.strFilenameExperiment1Obj)
+	oExperiment:train(50, "CG", false)
+  oExperiment:save(exprSetting.strFilenameExperiment2_LinearObj)
 else
-	oExperiment = CExperimentSparseBlock.loadFromFile(exprSetting.strFilenameExperiment1Obj)
+	oExperiment = CExperimentSparseBlock.loadFromFile(exprSetting.strFilenameExperiment2_LinearObj)
 end
 
 local taProtInfo = oExperiment:getConfidenceRange()
 oExperiment:saveResult(taProtInfo)
 
+--]]

@@ -22,7 +22,8 @@ function SparseBlockDropout:pri_ensureOutput(input)
 		local taInputCurr = input.taData[i]
 
 		taOutputCurr = { teValue = torch.zeros(taInputCurr.teValue:size()),
-										 teRowIdx = taInputCurr.teRowIdx }
+										 teRowIdx = taInputCurr.teRowIdx,
+									 	 teDefault = taInputCurr.teDefault }
 
 		table.insert(self.output.taData, taOutputCurr)
 		table.insert(self.taNoise, torch.zeros(taInputCurr.teValue:size()))
@@ -39,6 +40,8 @@ function SparseBlockDropout:pri_updateOutput_column(taInput, taOutput, teNoise)
 		teNoise:div(1-self.p)
 		output:cmul(teNoise)
 	end
+
+	taOutput.teDefault = taInput.teDefault
 
 end
 
@@ -84,6 +87,8 @@ function SparseBlockDropout:pri_updateGradInput_column(taInput, taGradOutput, ta
   if self.train then
 		gradInput:cmul(teNoise)
 	end
+
+	taGradInput.teGradOutputSum = taGradOutput.teGradOutputSum
 end
 
 function SparseBlockDropout:updateGradInput(input, gradOutput)

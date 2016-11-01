@@ -20,7 +20,7 @@ function CExperiment:buildArch(dDropoutRate)
   for key, taFileInfo in pairs(self.taMetaInfo) do
     local mSeq = nn.Sequential()
       mSeq:add(nn.SparseLinearX(taFileInfo.nWidth, nUnitWidthLayer0 ))
-      mSeq:add(nn.Dropout(dDropoutRate))
+--      mSeq:add(nn.Dropout(dDropoutRate))
     
     mLayer0:add(mSeq)
     nParallels = nParallels + 1
@@ -33,11 +33,56 @@ function CExperiment:buildArch(dDropoutRate)
 
   local mSeq = nn.Sequential()
     mSeq:add(nn.Linear(nParallels*nUnitWidthLayer0, 1))
-    mSeq:add(nn.Sigmoid())
+--    mSeq:add(nn.Sigmoid())
 --    mSeq:add(nn.Dropout(0.70))
   self.mNet:add(mSeq)
 --  self.mNet:add(nn.Linear(nParallels, 1))
 end
+
+-- ******************************************************************************************************
+-- ********* Method to allow transfer of parameters between CExperiment and CExperimentSparseBlock ******
+-- ******************************************************************************************************
+function CExperiment:getNColumns()
+	return table.getn(self.taMetaInfo)
+end
+
+function CExperiment:getModelParameters(nLayerId, nColumnId)
+	if nLayerId == 1 then
+		local mFirst = self.mNet.modules[1]
+		local mCurrent = mFirst.modules[nColumnId].modules[1]
+		return mCurrent.weight, mCurrent.bias
+	elseif nLayerId == 2 then
+		local mCurrent = self.mNet.modules[3].modules[1]
+		return mCurrent.weight, mCurrent.bias
+	else	
+		assert(false, "oops")
+	end
+end
+
+function CExperiment:test()
+  -- 1) load input
+  local taInput = {}
+  for key, taFileInfo in pairs(self.taMetaInfo) do
+    local taOneInput = self.oDataLoader:loadSparseInputSingleV2(taFileInfo.strFilename)
+    table.insert(taInput, taOneInput)
+  end
+
+  -- 2) Load the Target
+  local teTarget = self.oDataLoader:loadTarget()
+
+
+	-- 3) forward
+	local teOutput = self.mNet:forward(taInput)
+
+	print(teOutput)
+
+
+
+
+--	print(teOutput)
+
+end
+
 
 function CExperiment:train(nIteration, isKeepData)
   local nIteration = nIteration or 20
