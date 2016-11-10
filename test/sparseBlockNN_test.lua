@@ -61,6 +61,23 @@ local taInput4 = { nBatchSize = 8,
 										}
 									}
 
+local taInput5 = { nBatchSize = 3,
+									 taData = 
+									{ 
+										 {	teRowIdx = torch.LongTensor{{1}, {3}},
+									 			teValue = torch.Tensor({{{1}}, {{3}}}) }
+								 	},
+								}
+
+local taInput6 = { nBatchSize = 1,
+									 taData = 
+									{ 
+										 {	teRowIdx = torch.LongTensor{{1}},
+									 			teValue = torch.Tensor({{{100}}}) }
+								 	},
+								}
+
+
 function sparseBlockTensor_test.ReLU_test1()
 	local mNet = nn.SparseBlockReLU()
 	local taOutput = mNet:forward(taInput2)
@@ -177,6 +194,15 @@ function sparseBlockTensor_test.TemporalConvolution_test4()
 	print(mConvMain.gradWeight)
 
 end
+
+function sparseBlockTensor_test.TemporalConvolution_test5()
+	local scale = 1
+	print("======= mConv =======")
+	local taInput = taInput3
+	local mConv = nn.SparseBlockTemporalConvolution(2, 2, 4, 2)
+	local taOutput = mConv:forward(taInput)
+end
+
 
 function sparseBlockTensor_test.TemporalMaxPooling_test1()
 	local taInput = taInput3
@@ -595,59 +621,6 @@ function sparseBlockTensor_test.SparseBlockToDenseLinear_test6_teDefault()
 	print(mDenseToLinear.gradBias)
 end
 
-
-function sparseBlockTensor_test.SparseBlockDropout_test1()
-	torch.manualSeed(2)
-	local taInput = taInput4
-	local mDropout = nn.SparseBlockDropout(0.91)
-	local taOutput = mDropout:forward(taInput)
-	print("======= taOutput ======")
-	deposUtil.printSparseBlockInput(taOutput)
-	local taGradInput = mDropout:updateGradInput(taInput, taOutput)
-	print("======= taGradInput ======")
-	deposUtil.printSparseBlockInput(taGradInput)
-
-end
-
---sparseBlockTensor_test.ReLU_test1()
---sparseBlockTensor_test.TemporalConvolution_test1()
---sparseBlockTensor_test.TemporalConvolution_test2()
---sparseBlockTensor_test.TemporalConvolution_test3()
---sparseBlockTensor_test.TemporalConvolution_test4()
---sparseBlockTensor_test.TemporalMaxPooling_test1()
---sparseBlockTensor_test.TemporalMaxPooling_test2()
---sparseBlockTensor_test.ConvMaxPool_test1()
---sparseBlockTensor_test.SparseBlockFlattenDim3_test1()
---sparseBlockTensor_test.SparseBlockLinear_test1()
---sparseBlockTensor_test.SparseBlockLinear_test2()
---sparseBlockTensor_test.SparseBlockLinear_test3()
---sparseBlockTensor_test.SparseBlockLinear_test4()
---sparseBlockTensor_test.SparseBlockLinear_test5_bias()
---sparseBlockTensor_test.SparseBlockLinear_test6_bias()
---sparseBlockTensor_test.SparseBlockToDenseLinear_test1()
---sparseBlockTensor_test.SparseBlockToDenseLinear_test2()
---sparseBlockTensor_test.SparseBlockToDenseLinear_test3()
---sparseBlockTensor_test.SparseBlockToDenseLinear_test4_teDefault()
---sparseBlockTensor_test.SparseBlockToDenseLinear_test5_teDefault()
---sparseBlockTensor_test.SparseBlockToDenseLinear_test6_teDefault()
---sparseBlockTensor_test.SparseBlockDropout_test1()
-
-local taInput5 = { nBatchSize = 3,
-									 taData = 
-									{ 
-										 {	teRowIdx = torch.LongTensor{{1}, {3}},
-									 			teValue = torch.Tensor({{{1}}, {{3}}}) }
-								 	},
-								}
-
-local taInput6 = { nBatchSize = 1,
-									 taData = 
-									{ 
-										 {	teRowIdx = torch.LongTensor{{1}},
-									 			teValue = torch.Tensor({{{100}}}) }
-								 	},
-								}
-
 function printParams(m)
 	print("weight:")
 	print(m.weight)
@@ -737,4 +710,44 @@ function sparseBlockTensor_test.SparseBlockToDenseLinear_test7_validate()
 	matchGradParams(mDenseToLinear, mLinearLast)
 end
 
-sparseBlockTensor_test.SparseBlockToDenseLinear_test7_validate()
+
+
+function sparseBlockTensor_test.SparseBlockDropout_test1()
+	torch.manualSeed(2)
+	local taInput = taInput4
+	local mDropout = nn.SparseBlockDropout(0.91)
+	local taOutput = mDropout:forward(taInput)
+	print("======= taOutput ======")
+	deposUtil.printSparseBlockInput(taOutput)
+	local taGradInput = mDropout:updateGradInput(taInput, taOutput)
+	print("======= taGradInput ======")
+	deposUtil.printSparseBlockInput(taGradInput)
+
+end
+
+--sparseBlockTensor_test.ReLU_test1()
+--sparseBlockTensor_test.TemporalConvolution_test1()
+--sparseBlockTensor_test.TemporalConvolution_test2()
+--sparseBlockTensor_test.TemporalConvolution_test3()
+--sparseBlockTensor_test.TemporalConvolution_test4()
+
+--sparseBlockTensor_test.TemporalMaxPooling_test1()
+--sparseBlockTensor_test.TemporalMaxPooling_test2()
+--sparseBlockTensor_test.ConvMaxPool_test1()
+--sparseBlockTensor_test.SparseBlockFlattenDim3_test1()
+--sparseBlockTensor_test.SparseBlockLinear_test1()
+--sparseBlockTensor_test.SparseBlockLinear_test2()
+--sparseBlockTensor_test.SparseBlockLinear_test3()
+--sparseBlockTensor_test.SparseBlockLinear_test4()
+--sparseBlockTensor_test.SparseBlockLinear_test5_bias()
+--sparseBlockTensor_test.SparseBlockLinear_test6_bias()
+--sparseBlockTensor_test.SparseBlockToDenseLinear_test1()
+--sparseBlockTensor_test.SparseBlockToDenseLinear_test2()
+--sparseBlockTensor_test.SparseBlockToDenseLinear_test3()
+--sparseBlockTensor_test.SparseBlockToDenseLinear_test4_teDefault()
+--sparseBlockTensor_test.SparseBlockToDenseLinear_test5_teDefault()
+--sparseBlockTensor_test.SparseBlockToDenseLinear_test6_teDefault()
+--sparseBlockTensor_test.SparseBlockToDenseLinear_test7_validate()
+--sparseBlockTensor_test.SparseBlockDropout_test1()
+
+sparseBlockTensor_test.TemporalConvolution_test5()

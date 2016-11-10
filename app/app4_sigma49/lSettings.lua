@@ -10,6 +10,12 @@ do
 	lSettings.strFilenameExperiment2_LinearObj = "./model/experiment_2_Linear.obj"
   lSettings.nRows=337
 
+	function lSettings.setExprId(nExprId)
+		lSettings.nExprId = nExprId
+ 	  lSettings.strFilenameProtInfo = string.format("%s/protInfo_expr_%d.csv", lSettings.strBaseDir, nExprId)
+	end
+
+
   return lSettings
 end
 

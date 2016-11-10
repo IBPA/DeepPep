@@ -173,3 +173,9 @@ function CDataLoader:saveProtInfo(taProtInfo)
   file:close()
 end
 
+function CDataLoader:saveDescription(strDescription)
+  local file = io.open(self.exprSettings.strFilenameExprDescription, "w")
+	file:write(strDescription)
+	file:close()
+end
+

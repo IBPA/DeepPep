@@ -131,7 +131,7 @@ function CExperimentSparseBlock:test()
 
 end
 
-function CExperimentSparseBlock:train(nIteration, strOptimMethod, isEarlyStop, dStopError)
+function CExperimentSparseBlock:train(nIteration, strOptimMethod, isEarlyStop, dStopError, taTrainParam)
   local nIteration = nIteration or 20
 
   -- 1) load input
@@ -144,7 +144,7 @@ function CExperimentSparseBlock:train(nIteration, strOptimMethod, isEarlyStop, d
 	----[[
 	self.mNet:training()
   sys.tic()
-  local dTrainErr = trainerPool.trainSparseInputNet(self.mNet, taInput, teTarget, nIteration, strOptimMethod, isEarlyStop, dStopError)
+  local dTrainErr = trainerPool.trainSparseInputNet(self.mNet, taInput, teTarget, nIteration, strOptimMethod, isEarlyStop, dStopError, taTrainParam)
   print("\ntraining error:" .. dTrainErr) 
   print("training elapsed time(s):" .. sys.toc())
 	--]]
@@ -232,5 +232,10 @@ function CExperimentSparseBlock:saveResult(taProtInfo)
   end
 
   self.oDataLoader:saveProtInfo(taProtInfo)
+
+	if self.strArchDescription ~= nil then
+		self.oDataLoader:saveDescription(self.strArchDescription)
+	end
+
 end
 

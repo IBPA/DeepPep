@@ -7,8 +7,7 @@ do
 
   function trainerPool.getDefaultTrainParams(nRows, strOptimMethod, nMaxIteration)
 
-    local taTrainParam = {  --batchSize = 9, 
-                            batchSize = math.floor(nRows),
+    local taTrainParam = {   batchSize = nRows and math.floor(nRows),
                             criterion = nn.MSECriterion(),
                             nMaxIteration = nMaxIteration or 10,
                             coefL1 = 0.0,
@@ -20,8 +19,8 @@ do
 
     if taTrainParam.strOptimMethod == "SGD" then
       taTrainParam.taOptimParams = { 
-        learningRate = 0.9,
---        learningRateDecay = 0.999,
+        learningRate = 1.0,
+        --learningRateDecay = 0.1,
         momentum = 0.9 }
       taTrainParam.fuOptim = optim.sgd
   
@@ -101,19 +100,20 @@ do
     return fErr
   end
 
-  function trainerPool.trainSparseInputNet(mNet, taInput, teTarget, nMaxIteration, strOptimMethod, isEarlyStop, dStopError)
+  function trainerPool.trainSparseInputNet(mNet, taInput, teTarget, nMaxIteration, strOptimMethod, isEarlyStop, dStopError, taTrainParam)
 		strOptimMethod = strOptimMethod or "SGD"
     local criterion = nn.MSECriterion()
-    local taTrainParam = trainerPool.getDefaultTrainParams(teTarget:size(1), strOptimMethod, nMaxIteration )
+    local taTrainParam = taTrainParam or trainerPool.getDefaultTrainParams(teTarget:size(1), strOptimMethod, nMaxIteration )
 
     local errPrev = math.huge
     local errCurr = math.huge
 		local errBest = math.huge
 		teParameters, teGradParameters = mNet:getParameters()
 		local teParametersBest = torch.Tensor(teParameters:size())
-		local dMinDiffToUpdate = 0.0001
+		local dMinDiffToUpdate = 0.00005
 
     for i=1, taTrainParam.nMaxIteration do
+--			taTrainParam.taOptimParams.learningRate =   --(errPrev < math.huge ) and (errPrev*40) or 0.9
       errCurr = trainerPool.pri_trainSparseInputNet_SingleRound(mNet, taInput, teTarget, taTrainParam)
 
 --      --[[
@@ -122,7 +122,7 @@ do
         return errPrev
 			end
 
-			if errCurr < (errBest - 0.001) then
+			if errCurr < (errBest - 0.00001) then
 				print("updateing, error: " .. errCurr)
 				teParameters, teGradParameters = mNet:getParameters()
 				teParametersBest:copy(teParameters)

@@ -10,6 +10,13 @@ do
   lSettings.strFilenameExperiment2_LinearObj = string.format("./model/experiment_2_Linear.obj" )
   lSettings.nRows=759 -- ToDo: find the right number
 
+
+	function lSettings.setExprId(nExprId)
+		lSettings.nExprId = nExprId
+ 	  lSettings.strFilenameProtInfo = string.format("%s/protInfo_expr_%d.csv", lSettings.strBaseDir, nExprId)
+ 	  lSettings.strFilenameExprDescription = lSettings.strFilenameProtInfo .. ".desc"	
+	end
+
   return lSettings
 end
 

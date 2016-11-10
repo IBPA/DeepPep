@@ -1,10 +1,11 @@
 local SparseBlockTemporalMaxPooling, parent = torch.class('nn.SparseBlockTemporalMaxPooling', 'nn.Module')
 
-function SparseBlockTemporalMaxPooling:__init(kW, dW)
+function SparseBlockTemporalMaxPooling:__init(kW, dW, isRelax)
    dW = dW or kW
 
    self.kW = kW
    self.dW = dW
+	 self.isRelax = isRelax or false
 end
 
 function SparseBlockTemporalMaxPooling:pri_ensureOutput(input)
@@ -43,9 +44,14 @@ function SparseBlockTemporalMaxPooling:pri_updateOutput_column(taInput, taOutput
 	local input = taInput.teValue
 	local output = taOutput.teValue
 
+	local kW = self.kW
+	if self.isRelax  then
+		kW = math.min(input:size(2), kW)
+	end
+
    input.THNN.TemporalMaxPooling_updateOutput(
        input:cdata(), output:cdata(),
-       teIndices:cdata(), self.kW, self.dW
+       teIndices:cdata(), kW, self.dW
    )
 
 end
@@ -86,10 +92,16 @@ function SparseBlockTemporalMaxPooling:pri_updateGradInput_column(taInput, taGra
 	local gradOutput = taGradOutput.teValue
 	local gradInput = taGradInput.teValue
 
+	local kW = self.kW
+	if self.isRelax  then
+		kW = math.min(input:size(2), kW)
+	end
+
+
 	input.THNN.TemporalMaxPooling_updateGradInput(
 	    input:cdata(), gradOutput:cdata(),
 	    gradInput:cdata(), teIndices:cdata(),
-	    self.kW, self.dW
+	    kW, self.dW
 	)
 
 end
