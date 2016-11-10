@@ -129,12 +129,13 @@ do
 				errBest = errCurr
 			end
 
-      if errCurr ~= nil then
+      if errCurr ~= nil and errCurr < math.huge then
         local message = errCurr < errPrev and "<" or "!>"
         myUtil.log(message, false, taTrainParam.isLog)
         myUtil.log(errCurr, false, taTrainParam.isLog)
         errPrev = errCurr
       else
+				print(string.format("!!!! %s !!!!", tostring(errCurr)))
         error("invalid value for errCurr!")
       end
       --]]

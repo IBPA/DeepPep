@@ -26,8 +26,8 @@ oExperiment:roundTrip()
 
 ----[[
 
-local taTrainParams = trainerPool.getDefaultTrainParams(nil, "SGD", 1)
-taTrainParams.taOptimParams.learningRate = 20.0
+local taTrainParams = trainerPool.getDefaultTrainParams(nil, "SGD", 500)
+taTrainParams.taOptimParams.learningRate = 10.0
 oExperiment:train(taTrainParams)
 
 -- 3) predict
