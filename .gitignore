@@ -1,2 +1,5 @@
 *.sprs
 *.txt
+*.csv
+*.csv.*
+/DeepPep

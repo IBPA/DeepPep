@@ -15,6 +15,7 @@ require '../SparseBlockFlattenDim3.lua'
 require '../SparseBlockLinear.lua'
 require '../SparseBlockToDenseLinear.lua'
 require '../SparseBlockDropout.lua'
+require '../SparseBlockSum.lua'
 
 local deposUtil = deposUtil or require('../deposUtil.lua')
 
@@ -725,6 +726,22 @@ function sparseBlockTensor_test.SparseBlockDropout_test1()
 
 end
 
+function sparseBlockTensor_test.SparseBlockSum_test1()
+	torch.manualSeed(2)
+	local taInput = taInput3
+	local mSeq = nn.Sequential()
+		mSeq:add(nn.SparseBlockSum())
+
+	local taOutput = mSeq:forward(taInput)
+	print("======= taOutput ======")
+	deposUtil.printSparseBlockInput(taOutput)
+	local taGradInput = mSeq:updateGradInput(taInput, taOutput)
+	print("======= taGradInput ======")
+	deposUtil.printSparseBlockInput(taGradInput)
+
+end
+
+
 --sparseBlockTensor_test.ReLU_test1()
 --sparseBlockTensor_test.TemporalConvolution_test1()
 --sparseBlockTensor_test.TemporalConvolution_test2()
@@ -750,4 +767,5 @@ end
 --sparseBlockTensor_test.SparseBlockToDenseLinear_test7_validate()
 --sparseBlockTensor_test.SparseBlockDropout_test1()
 
-sparseBlockTensor_test.TemporalConvolution_test5()
+--sparseBlockTensor_test.TemporalConvolution_test5()
+sparseBlockTensor_test.SparseBlockSum_test1()

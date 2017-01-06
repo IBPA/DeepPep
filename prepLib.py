@@ -61,6 +61,7 @@ def consolidatePepProbs(listPeptideProb):
       #        listPeptideProbRes.append([strPeptide, stat.median(listProb)]) #ToDo: uncomment after removing next line if you want median
         listPeptideProbRes.append([strPeptide, max(listProb)])
 
+    listPeptideProbRes.sort()
     return listPeptideProbRes
 
 def getProtRefFileNames(strBaseProtRefsPath):
@@ -98,7 +99,7 @@ def fuSaveProtPepOnes(strDir, strProtFileName, listProtPepOnes):
     with open(strFilePath, 'w') as bfFile:
         for row in listProtPepOnes:
             if len(row)>2:
-                print("#######Look:" + strProtFileName )
+                print("####### ******************************* Look:" + strProtFileName )
             bfFile.write('{:d}:'.format(row[0]) )
             for listRange in row[1]:
                 bfFile.write('|{:d},{:d}'.format(listRange[0], listRange[1]))
@@ -150,3 +151,70 @@ def fuSavePepProbsTargetFromList(strFilePath, listPeptideProb):
 
     return
 
+
+#sparseData3 (cleavage sites) related functions
+def getEdges(lSegments):
+    edges = {}
+    for sLine in lSegments:
+        for s in sLine[1]:
+            sL = s[0]
+            sR = s[1] + sL
+            edges[sL] = True
+            edges[sR] = True
+
+    return sorted(list(edges.keys()))
+    
+def getOneEdgeMatch(pepMatches, edges):
+
+    eMatchesOne = []
+    for pM in pepMatches:
+        eL = pM[0]
+        idx = edges.index(eL)
+        eMatchesOne += [[idx, 1]]
+
+        eR = eL + pM[1]
+        idx = edges.index(eR)
+        eMatchesOne += [[idx, 1]]
+
+    return eMatchesOne
+
+def getEdgeMatches(edges, flistProtPepOnes):
+    eMatches = []
+    for s in flistProtPepOnes:
+        eMatchesOne = getOneEdgeMatch(s[1], edges)
+        eMatches += [[ s[0], eMatchesOne]]
+
+    return eMatches
+
+def fuFindPeptideMatch_CleavageSites(strBaseProtRefsPath , strProtFilename, listPeptideProb):
+    flistProtPepOnes = fuFindPeptideMatch(strBaseProtRefsPath, strProtFilename, listPeptideProb)
+    edges = getEdges(flistProtPepOnes)
+    eMatches = getEdgeMatches(edges, flistProtPepOnes)
+
+    return eMatches, len(edges)
+
+def fuRunAllProt_CleavageSites(listProtFileName, strBaseProtRefsPath, strSparseDir, listPeptideProb):
+    def fuRunProt(strProtFileName):
+        print("#start:" + strProtFileName)
+        listProtPepOnes, nEdges = fuFindPeptideMatch_CleavageSites(strBaseProtRefsPath , strProtFileName, listPeptideProb)
+        if len(listProtPepOnes) > 0:
+            fuSaveProtPepOnes(strSparseDir, strProtFileName, listProtPepOnes)
+            print("saved:" + strProtFileName)
+            return [strProtFileName, nEdges]
+
+    if len(listProtFileName) < 2 : # for test
+        fuRunProt(listProtFileName[0])
+        return
+    
+    #print(listProtFileName)
+    pool = ThreadPool(8)
+    res = pool.map(fuRunProt, listProtFileName)
+    pool.close() 
+    pool.join() 
+    
+    return list(filter(None.__ne__, res))
+
+def fuSaveMetaInfo_CleavageSites(strFilename, metaInfo):
+    with open(strFilename, 'w') as bfFile:
+        for info in metaInfo:
+            bfFile.write('{!s},{:d}\n'.format(info[0], info[1]))

@@ -9,6 +9,7 @@ require './SparseBlockFlattenDim3.lua'
 require './SparseBlockLinear.lua'
 require './SparseBlockToDenseLinear.lua'
 require './SparseBlockDropout.lua'
+require './SparseBlockSum.lua'
 
 local trainerPool = require('./deposTrainerPool.lua')
 local deposUtil = deposUtil or require('./deposUtil.lua')
@@ -232,6 +233,7 @@ function CExperimentSparseBlock:saveResult(taProtInfo)
   end
 
   self.oDataLoader:saveProtInfo(taProtInfo)
+	self.oDataLoader:saveModelParams(self.mNet:getParameters())
 
 	if self.strArchDescription ~= nil then
 		self.oDataLoader:saveDescription(self.strArchDescription)

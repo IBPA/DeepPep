@@ -5,9 +5,9 @@
 
 local SparseBlockToDenseLinear, parent = torch.class('nn.SparseBlockToDenseLinear', 'nn.Module')
 
-function SparseBlockToDenseLinear:__init(nOutputWidth, bias)
+function SparseBlockToDenseLinear:__init(nOutputWidth, bias, stdv)
 	self.bias = bias or false
-
+	self.stdv = stdv
 	self.nOutputWidth = nOutputWidth
 end
 
@@ -37,7 +37,7 @@ function SparseBlockToDenseLinear:pri_ensureWeight(input)
 		self.gradBias = torch.zeros(1, self.nOutputWidth)
 	end
 
-	self:reset()
+	self:reset(self.stdv)
 end
 
 function SparseBlockToDenseLinear:reset(stdv)

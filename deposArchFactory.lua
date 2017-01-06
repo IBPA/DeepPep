@@ -33,7 +33,7 @@ do
 				self.mNet:add(self.mRest)
 		end,
 		function(self) -- 3
-			self.strArchDescription = "MaxPooling(nPoolingWindow=12), Linear(nNodes=2)"
+			self.strArchDescription = "MaxPooling(nPoolingWindow=12), Linear(nNodes=1)"
 
 			self.mFirst = nn.Sequential()
 				self.mFirst:add(nn.SparseBlockTemporalMaxPooling(12))
@@ -63,13 +63,13 @@ do
 				self.mNet:add(self.mRest)
 		end,
 		function(self) -- 5
-			self.strArchDescription = "MaxPooling(nPoolingWindow=20), Linear(nNodes=2)"
+			self.strArchDescription = "MaxPooling(nPoolingWindow=21), Linear(nNodes=1)"
 
 			self.mFirst = nn.Sequential()
-				self.mFirst:add(nn.SparseBlockTemporalMaxPooling(20))
+				self.mFirst:add(nn.SparseBlockTemporalMaxPooling(21))
 
 				self.mFirst:add(nn.SparseBlockFlattenDim3())
-				self.mFirst:add(nn.SparseBlockLinear(2, false))
+				self.mFirst:add(nn.SparseBlockLinear(1, false))
 
 			self.mRest = nn.SparseBlockToDenseLinear(1, false)
 
@@ -219,7 +219,7 @@ do
 				self.mNet:add(self.mRest)
 		end,
 		function(self) -- 14
-			self.strArchDescription = "Conv(in=1, out=1, kW=4), ReLU, MaxPool(w=4), Conv(in=1, out=1 kW=4), ReLU, MaxPool(w=3), Linear(nNodes=2)"
+			self.strArchDescription = "Conv(in=1, out=1, kW=4), ReLU, MaxPool(w=4), Conv(in=1, out=1 kW=4), ReLU, MaxPool(w=3), Linear(nNodes=1)"
 
 			self.mFirst = nn.Sequential()
 
@@ -241,6 +241,76 @@ do
 				self.mNet:add(self.mFirst)
 				self.mNet:add(self.mRest)
 		end,
+		function(self) -- 15 (used for 18mix, yeast)
+			self.strArchDescription = "MaxPooling(nPoolingWindow=12)"
+
+			self.mFirst = nn.Sequential()
+				self.mFirst:add(nn.SparseBlockTemporalMaxPooling(12))
+
+				self.mFirst:add(nn.SparseBlockFlattenDim3())
+
+			self.mRest = nn.SparseBlockToDenseLinear(1, false)
+
+			self.mNet = nn.Sequential()
+				self.mNet:add(self.mFirst)
+				self.mNet:add(self.mRest)
+		end,
+		function(self) -- 16 (used for sigma49)
+			self.strArchDescription = "MaxPooling(nPoolingWindow=21)"
+
+			self.mFirst = nn.Sequential()
+				self.mFirst:add(nn.SparseBlockTemporalMaxPooling(21))
+
+				self.mFirst:add(nn.SparseBlockFlattenDim3())
+
+			self.mRest = nn.SparseBlockToDenseLinear(1, false)
+
+			self.mNet = nn.Sequential()
+				self.mNet:add(self.mFirst)
+				self.mNet:add(self.mRest)
+		end,
+		function(self) -- 17
+			self.strArchDescription = "just final layer"
+
+			self.mFirst = nn.Sequential()
+
+				self.mFirst:add(nn.SparseBlockFlattenDim3())
+
+			self.mRest = nn.SparseBlockToDenseLinear(1, false, 0)
+
+			self.mNet = nn.Sequential()
+				self.mNet:add(self.mFirst)
+				self.mNet:add(self.mRest)
+		end,
+		function(self) -- 18
+			self.strArchDescription = "MaxPooling(nPoolingWindow=25)"
+
+			self.mFirst = nn.Sequential()
+				self.mFirst:add(nn.SparseBlockTemporalMaxPooling(25, 25, false, false))
+
+				self.mFirst:add(nn.SparseBlockFlattenDim3())
+
+			self.mRest = nn.SparseBlockToDenseLinear(1, false, 0)
+
+			self.mNet = nn.Sequential()
+				self.mNet:add(self.mFirst)
+				self.mNet:add(self.mRest)
+		end,
+		function(self) -- 19
+			self.strArchDescription = "Simply Count in first layer"
+
+			self.mFirst = nn.Sequential()
+				self.mFirst:add(nn.SparseBlockSum())
+
+				self.mFirst:add(nn.SparseBlockFlattenDim3())
+
+			self.mRest = nn.SparseBlockToDenseLinear(1, false)
+
+			self.mNet = nn.Sequential()
+				self.mNet:add(self.mFirst)
+				self.mNet:add(self.mRest)
+		end,
+
 	}
 
 	function deposArchFactory.getArchBuilder(nArchId)

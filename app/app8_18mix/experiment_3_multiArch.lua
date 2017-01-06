@@ -24,9 +24,8 @@ oExperiment:buildArch()
 -- 2) train
 oExperiment:roundTrip()
 
-----[[
 
-local taTrainParams = trainerPool.getDefaultTrainParams(nil, "SGD", 2000)
+local taTrainParams = trainerPool.getDefaultTrainParams(nil, "SGD", 2500)
 taTrainParams.taOptimParams.learningRate = 2.0
 oExperiment:train(taTrainParams)
 
@@ -34,4 +33,3 @@ oExperiment:train(taTrainParams)
 local taProtInfo = oExperiment:getConfidenceRange()
 oExperiment:saveResult(taProtInfo)
 
---]]

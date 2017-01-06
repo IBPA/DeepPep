@@ -173,6 +173,16 @@ function CDataLoader:saveProtInfo(taProtInfo)
   file:close()
 end
 
+function CDataLoader:saveModelParams(teParams)
+  local file = io.open(self.exprSettings.strFilenameExprParams , "w")
+
+	for i=1, teParams:size(1) do
+		file:write(string.format("%f\n", teParams[i]))
+	end
+
+	file:close()
+end
+
 function CDataLoader:saveDescription(strDescription)
   local file = io.open(self.exprSettings.strFilenameExprDescription, "w")
 	file:write(strDescription)
