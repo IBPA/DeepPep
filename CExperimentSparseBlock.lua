@@ -185,6 +185,11 @@ function CExperimentSparseBlock:getConfidenceOne(teOutputAll, taOutputFirst, taF
 	taFirstProt.teValue:copy(teFirstProtValueOrig)
 
   -- 6) calculate prot_pepdide confidences
+	local dSum = self:getNormalizedResidualSum(taInput, teOutputResidual)
+	return dSum /teOutputAll:size(1)
+end
+
+function CExperimentSparseBlock:getNormalizedResidualSum(taInput, teOutputResidual)
 	local dSum = 0
 	local nMatchingPeptides = taInput.teRowIdx:size(1)
 	for i=1, nMatchingPeptides do
@@ -194,7 +199,7 @@ function CExperimentSparseBlock:getConfidenceOne(teOutputAll, taOutputFirst, taF
 		dSum = dSum + c_ij
 	end
 
-	return dSum /teOutputAll:size(1)
+	return dSum
 end
 
 function CExperimentSparseBlock:getConfidenceRange()

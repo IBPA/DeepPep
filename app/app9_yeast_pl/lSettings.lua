@@ -1,7 +1,7 @@
 local lSettings = {}
 
 do
-  lSettings.strBaseDir = "/Users/ameen/mygithub/depos/app/app9_yeast_pl/sparseData3"
+  lSettings.strBaseDir = "/Users/ameen/mygithub/depos/app/app9_yeast_pl/sparseData4"
   lSettings.strFilenameTarget = string.format("%s/target.csv", lSettings.strBaseDir)
   lSettings.strFilenameMetaInfo = string.format("%s/metaInfo.csv", lSettings.strBaseDir)
   lSettings.strFilenameProtRef = string.format("%s/yeast_reference.csv", lSettings.strBaseDir)

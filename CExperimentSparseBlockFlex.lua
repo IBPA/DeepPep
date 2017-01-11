@@ -1,4 +1,6 @@
 require('./CExperimentSparseBlock.lua')
+require('./SparseCleavageProb.lua')
+require('./SparseBlockToDenseSum.lua')
 
 
 CExperimentSparseBlockFlex, parent = torch.class("CExperimentSparseBlockFlex", "CExperimentSparseBlock" )
@@ -14,5 +16,6 @@ function CExperimentSparseBlockFlex:buildArch()
 end
 
 function CExperimentSparseBlockFlex:train(taTrainParams)
-	parent.train(self, 20, "SGD", false, nil, taTrainParams)
+	parent.train(self, 20, "SGD", false, 0.0001, taTrainParams)
 end
+

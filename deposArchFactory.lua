@@ -311,6 +311,36 @@ do
 				self.mNet:add(self.mRest)
 		end,
 
+		function(self) --20
+			self.strArchDescription = "Layer1: Cleavage porbability, LayerFinal:  DenseLinear [ChangeItToSum]"
+
+			self.mFirst = nn.Sequential()
+				self.mFirst:add(nn.SparseCleavageProb())
+
+				--self.mRest = nn.SparseBlockToDenseLinear(1, false, 1) --change this to sum 
+				self.mRest = nn.SparseBlockToDenseSum() 
+
+				self.mNet = nn.Sequential()
+					self.mNet:add(self.mFirst)
+					self.mNet:add(self.mRest)
+		end,
+
+		function(self) --21
+			self.strArchDescription = "Layer1: MaxPooling(nPoolingWindow=4), Linear, Sum"
+
+			self.mFirst = nn.Sequential()
+
+				self.mFirst:add(nn.SparseBlockTemporalMaxPooling(4))
+				self.mFirst:add(nn.SparseBlockFlattenDim3())
+				self.mFirst:add(nn.SparseBlockLinear(1, false))
+
+				self.mRest = nn.SparseBlockToDenseSum() 
+
+				self.mNet = nn.Sequential()
+					self.mNet:add(self.mFirst)
+					self.mNet:add(self.mRest)
+		end,
+
 	}
 
 	function deposArchFactory.getArchBuilder(nArchId)
