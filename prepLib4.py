@@ -1,4 +1,6 @@
 import re
+import csv
+import statistics as stat
 from multiprocessing.dummy import Pool as ThreadPool
 import prepLib
 
@@ -85,3 +87,48 @@ def fuRunAllProt_CleavageSites(listProtFileName, strBaseProtRefsPath, strSparseD
     pool.join() 
     
     return list(filter(None.__ne__, res))
+
+def appendDetectabilitiesFromCsv(listPepProb, strFilePath, delimiter, pepId, probId):
+    dicPeptideDetect = {}
+
+    #load:
+    with open(strFilePath, "r") as bfCsv:
+        csvReader = csv.reader(bfCsv, delimiter = delimiter, skipinitialspace=True)
+        counter = 0
+        for row in csvReader:
+            strPeptide = row[pepId]
+            dDetectability = float(row[probId])
+
+            if strPeptide not in dicPeptideDetect:
+                dicPeptideDetect[strPeptide] = list()
+            
+            dicPeptideDetect[strPeptide].append(float(dDetectability))
+
+    #consolidate:
+    count = 0
+    for row in listPepProb:
+        strPeptide = row[0]
+        dDetectabilityConsolidated = float(1.0)
+
+        if strPeptide in dicPeptideDetect:
+            dDetectabilityConsolidated = stat.mean(dicPeptideDetect[strPeptide])
+            count = count + 1
+    
+        row.append(dDetectabilityConsolidated)
+
+    return listPepProb
+
+
+def fuSavePepProbsTargetFromList(strFilePath, listPeptideProb):
+    with open(strFilePath, 'w') as bfFile:
+        for row in listPeptideProb:
+            dProb = row[1]
+            bfFile.write('{:.6f}'.format(dProb))
+
+            if len(row)>2:
+                dDetectability = row[2]
+                bfFile.write(',{:.6f}'.format(dDetectability))
+            
+            bfFile.write('\n')
+
+    return

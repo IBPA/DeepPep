@@ -3,3 +3,6 @@
 *.csv
 *.csv.*
 /DeepPep
+*.pdf
+*.obj
+

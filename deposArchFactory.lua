@@ -312,7 +312,7 @@ do
 		end,
 
 		function(self) --20
-			self.strArchDescription = "Layer1: Cleavage porbability, LayerFinal:  DenseLinear [ChangeItToSum]"
+			self.strArchDescription = "Layer1: Cleavage porbability, LayerFinal:  DenseSum "
 
 			self.mFirst = nn.Sequential()
 				self.mFirst:add(nn.SparseCleavageProb())
@@ -339,6 +339,56 @@ do
 				self.mNet = nn.Sequential()
 					self.mNet:add(self.mFirst)
 					self.mNet:add(self.mRest)
+		end,
+
+		function(self) --22
+			self.strArchDescription = "Layer1: Cleavage porbability, LayerFinal:  DenseMul"
+
+			self.mFirst = nn.Sequential()
+				self.mFirst:add(nn.SparseCleavageProbC())
+
+				self.mRest = nn.SparseBlockToDenseMul(-1, 1) 
+
+				self.mNet = nn.Sequential()
+					self.mNet:add(self.mFirst)
+					self.mNet:add(self.mRest)
+		end,
+
+		function(self) --23
+			self.strArchDescription = "Layer1: Linear (change to LinearNonNegativeWeights)"
+
+			self.mFirst = nn.Sequential()
+				self.mFirst:add(nn.SparseBlockFlattenDim3())
+				self.mFirst:add(nn.SparseBlockLinearNonNegativeW(1))
+
+				self.mRest = nn.SparseBlockToDenseSum() 
+
+				self.mNet = nn.Sequential()
+					self.mNet:add(self.mFirst)
+					self.mNet:add(self.mRest)
+		end,
+		function(self) -- 24
+			self.strArchDescription = "experimenting ...." -- For DeepPep
+
+			self.mFirst = nn.Sequential()
+
+				self.mFirst:add(nn.SparseBlockTemporalConvolution(1, 8, 8))
+				self.mFirst:add(nn.SparseBlockReLU())
+				self.mFirst:add(nn.SparseBlockTemporalMaxPooling(8))
+
+--				self.mFirst:add(nn.SparseBlockTemporalConvolution(4, 8, 4))
+--				self.mFirst:add(nn.SparseBlockReLU())
+--				self.mFirst:add(nn.SparseBlockTemporalMaxPooling(4))
+
+
+				self.mFirst:add(nn.SparseBlockFlattenDim3())
+				self.mFirst:add(nn.SparseBlockLinear(2, false))
+
+			self.mRest = nn.SparseBlockToDenseLinear(1, false)
+
+			self.mNet = nn.Sequential()
+				self.mNet:add(self.mFirst)
+				self.mNet:add(self.mRest)
 		end,
 
 	}

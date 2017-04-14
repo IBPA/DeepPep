@@ -9,6 +9,12 @@ function CExperimentSparseBlockFlex_Data4:__init(oDataLoader, fuArchBuilder)
 end
 
 function CExperimentSparseBlockFlex_Data4:getNormalizedResidualSum(taInput, teOutputResidual)
+
+	if self.oDataLoader.isUseDetectabilities then
+		local teDetectabilities = self.oDataLoader:loadDetectabilities()
+		teOutputResidual = torch.cmul(teOutputResidual, teDetectabilities)
+	end
+	
 	local dSum = 0
 	local nMatchingPeptides = taInput.teIdx:size(1)
 	for i=1, nMatchingPeptides do

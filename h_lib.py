@@ -69,7 +69,7 @@ def getProteinPeptideMatches(listPepProb, in_strProtRefsDir):
 
     return res
 
-def getYInfo(YInfo, in_strProtRefsDir, strXMatchProb_filename, isRedo=False):
+def getXInfo(YInfo, in_strProtRefsDir, strXMatchProb_filename, isRedo=False):
     XMatchProb = None
     if isRedo:
         with open(strXMatchProb_filename, 'wb') as f:
@@ -106,7 +106,7 @@ def updateXMatchingProbabilities(XMatchProb, YMatchProbCount):
 def getAccumulatedXMatchingProbabilities(XMatchProb):
     XPred = []
     for protInfo in XMatchProb:
-        strProtName = protInfo[0][:-4]
+        strProtName = protInfo[0][:-4] # removing the .txt ToDo: fix so that it's not needed
         dPred = 0
         for key, value in protInfo[1].items():
             dPred += value[0]*value[1]

@@ -2,13 +2,13 @@
 -- 	first column in teIdx is the row id
 --	second column is the cleavage start
 --	third column is the cleavage end
-local SparseCleavageProb, parent_SparseCleavageProb = torch.class('nn.SparseCleavageProb', 'nn.Module')
+local SparseCleavageProbC, parent_SparseCleavageProbC = torch.class('nn.SparseCleavageProbC', 'nn.Module')
 
-function SparseCleavageProb:__init()
+function SparseCleavageProbC:__init()
 
 end
 
-function SparseCleavageProb:pri_ensureWeight(input)
+function SparseCleavageProbC:pri_ensureWeight(input)
 	if self.weight ~= nil then
 		return
 	end
@@ -26,14 +26,14 @@ function SparseCleavageProb:pri_ensureWeight(input)
 	end
 
 	-- allocate:
-	self.weight = torch.Tensor(nTotalWeightSize):fill(0.5)
+	self.weight = torch.Tensor(nTotalWeightSize):fill(0.4)
 --	self.weight = torch.rand(nTotalWeightSize)
 	self.gradWeight = torch.zeros(nTotalWeightSize)
 
 	self:reset()
 end
 
-function SparseCleavageProb:pri_getSubW(i, teW)
+function SparseCleavageProbC:pri_getSubW(i, teW)
 	local nStart = self.weightMeta[i]
 	local nLenght = -1  
 	if i < self.weightMeta:size(1) then
@@ -45,15 +45,15 @@ function SparseCleavageProb:pri_getSubW(i, teW)
 	return teW:narrow(1, nStart, nLenght)
 end
 
-function SparseCleavageProb:pri_getSubWeight(i)
+function SparseCleavageProbC:pri_getSubWeight(i)
 	return self:pri_getSubW(i, self.weight)
 end
 
-function SparseCleavageProb:pri_getSubGradWeight(i)
+function SparseCleavageProbC:pri_getSubGradWeight(i)
 	return self:pri_getSubW(i, self.gradWeight)
 end
 
-function SparseCleavageProb:pri_getSparseBlockRowIdx(teIdx)
+function SparseCleavageProbC:pri_getSparseBlockRowIdx(teIdx)
 	local taIdx = {}
 	local idxLast = -1
 
@@ -70,7 +70,7 @@ function SparseCleavageProb:pri_getSparseBlockRowIdx(teIdx)
 	return teRowIdx:resize(teRowIdx:size(1), 1)
 end
 
-function SparseCleavageProb:pri_ensureOutput(input)
+function SparseCleavageProbC:pri_ensureOutput(input)
 	if self.output ~= nil then
 		return
 	end
@@ -91,7 +91,7 @@ function SparseCleavageProb:pri_ensureOutput(input)
 
 end
 
-function SparseCleavageProb:pri_g(dX)
+function SparseCleavageProbC:pri_g(dX)
 	if dX < 0 then 
 		return 0
 	end
@@ -103,7 +103,7 @@ function SparseCleavageProb:pri_g(dX)
 	return dX
 end
 
-function SparseCleavageProb:pri_dg(dX)
+function SparseCleavageProbC:pri_dg(dX)
 	if dX < 0 or dX > 1 then 
 		return 0
 	end
@@ -112,9 +112,9 @@ function SparseCleavageProb:pri_dg(dX)
 end
 
 
-function SparseCleavageProb:pri_updateOutput_column_row(teWeight, idxL, idxR, taOutput, iOutput)
+function SparseCleavageProbC:pri_updateOutput_column_row(teWeight, idxL, idxR, taOutput, iOutput)
 
-	local dMul = self:pri_g(teWeight[idxL]) * self:pri_g(teWeight[idxR])
+	local dMul = 1 - self:pri_g(teWeight[idxL]) * self:pri_g(teWeight[idxR])
 
 	--[[
 	for i=idxL+1, idxR-1 do
@@ -123,11 +123,11 @@ function SparseCleavageProb:pri_updateOutput_column_row(teWeight, idxL, idxR, ta
 	--]]
 
 	local dOutputValue = taOutput.teValue[iOutput][1]
-	taOutput.teValue[iOutput][1] = dOutputValue + dMul
+	taOutput.teValue[iOutput][1] = dOutputValue * dMul
 end
 
-function SparseCleavageProb:pri_updateOutput_column(taInput, taOutput, teWeight)
-	taOutput.teValue:fill(0)
+function SparseCleavageProbC:pri_updateOutput_column(taInput, taOutput, teWeight)
+	taOutput.teValue:fill(1)
 	local nRows = taInput.teIdx:size(1)
 	local iInputPrev = -1
 	local iOutput = 1
@@ -146,7 +146,7 @@ function SparseCleavageProb:pri_updateOutput_column(taInput, taOutput, teWeight)
 
 end
 
-function SparseCleavageProb:updateOutput(input)
+function SparseCleavageProbC:updateOutput(input)
 	self:pri_ensureWeight(input)
 	self:pri_ensureOutput(input)
 
@@ -162,8 +162,8 @@ function SparseCleavageProb:updateOutput(input)
 	return self.output
 end
 
-function SparseCleavageProb:pri_getGradWeight_Edge(teF, teDf, idx)
-	local dMul = 1
+function SparseCleavageProbC:pri_getGradWeight_Edge(teF, teDf, idx)
+	local dMul = -1
 	local nWidth = teF:size(1)
 
 		if idx == 1 then
@@ -185,7 +185,7 @@ function SparseCleavageProb:pri_getGradWeight_Edge(teF, teDf, idx)
 	return dMul
 end
 
-function SparseCleavageProb:pri_accGradWeight_column_row(teWeight, teGradWeight, idxL, idxR, dGradOutput, scale)
+function SparseCleavageProbC:pri_accGradWeight_column_row(teWeight, teGradWeight, idxL, idxR, dGradOutput, scale)
 	local nWidth = idxR - idxL + 1
 	local teF = torch.Tensor(nWidth)
 	local teDf = torch.Tensor(nWidth)
@@ -217,7 +217,7 @@ function SparseCleavageProb:pri_accGradWeight_column_row(teWeight, teGradWeight,
 
 end
 
-function SparseCleavageProb:pri_accGradWeight_column(taInput, taGradOutput, teWeight, teGradWeight, scale)
+function SparseCleavageProbC:pri_accGradWeight_column(taInput, taGradOutput, teWeight, teGradWeight, scale)
 	teGradWeight:fill(0)
 
 	local nRows = taInput.teIdx:size(1)
@@ -239,7 +239,7 @@ function SparseCleavageProb:pri_accGradWeight_column(taInput, taGradOutput, teWe
 
 end
 
-function SparseCleavageProb:accGradParameters(input, gradOutput, scale)
+function SparseCleavageProbC:accGradParameters(input, gradOutput, scale)
   scale = scale or 1
 	local nColumns = table.getn(input.taData)
 
