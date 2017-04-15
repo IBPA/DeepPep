@@ -5,6 +5,8 @@ Requirements
 * torch7
 * git clone https://github.com/ameenetemady/MyCommon # includes some utility code
 * git clone https://github.com/ameenetemady/depos #this repository
+* luarocks install cephes
+* luarocks install csv
 
 Running DePos consists of three main steps:
 ##Step 1 - Data Preparation (generating sparse input format)#
