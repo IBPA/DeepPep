@@ -37,7 +37,7 @@ function SparseBlockTemporalMaxPooling:pri_ensureTaIndices(input)
 	local nColumns = table.getn(input.taData)
 	for i=1, nColumns do
 		local taInputCurr = input.taData[i]
-		table.insert(self.taIndices, taInputCurr.teValue.new())
+		table.insert(self.taIndices, taInputCurr.teValue.new():long()) -- fixe just here, maybe not optimal!?
 	end
 end
 
