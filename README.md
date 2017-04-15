@@ -23,5 +23,5 @@ Running DePos consists of three main steps:
   1. “strBaseDir” to the directory path, 
   2. “strFilenameProtRef” to the protein reference file (for evaluating final performance) (and don’t for get to copy the file to sparseData2 directory), 
   3. nRows to the number of rows in sparseData/target.csv
-* Run:  th experiment_3_multiArch.lua 14
+* Run:  th experiment_3_multiArch.lua 24
 * Run: python3.4 ../../getAUC.py
