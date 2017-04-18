@@ -13,7 +13,8 @@ in_strPeptideFilename = '{!s}/data/protein/18mix/18_mixtures_peptide_identificat
 in_strProtRefsDir = './protRefs'
 out_strOutputBaseDir = './sparseData2'
 
-prepLib.breakFasta(in_strFastaFilename, in_strProtRefsDir, 1)
+protsDic = prepLib.loadUniqProtsDicFromCsv(in_strPeptideFilename, "\t", 1)
+prepLib.breakFasta(in_strFastaFilename, in_strProtRefsDir, 1, protsDic)
 listProtRefFileName = prepLib.getProtRefFileNames(in_strProtRefsDir)
 
 # load peptide probabilities

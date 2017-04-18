@@ -5,31 +5,31 @@ import statistics as stat
 import re
 from multiprocessing.dummy import Pool as ThreadPool
 
-def breakFasta(strFastaFilename, strProtRefsDir, nameId):
-  if nameId is None:
-    nameId = 0
+# Description: break the fasta file into multiple proteins, only save the ones provided in protsDic
+def breakFasta(strFastaFilename, strProtRefsDir, nameId, protsDic = None):
+    if nameId is None:
+        nameId = 0
 
   # create dir if missing
-  if not os.path.exists(strProtRefsDir):
+    if not os.path.exists(strProtRefsDir):
         os.makedirs(strProtRefsDir)
 
   # read from fasta file and generate one file for each protein
-  counter = 0
-  for currRecord in SeqIO.parse(strFastaFilename, "fasta"):
+    counter = 0
+    for currRecord in SeqIO.parse(strFastaFilename, "fasta"):
+        if (protsDic is None) or (currRecord.name in  protsDic): # means: if protsDic is provided, then verify
+            currRecordNameParts = currRecord.name.split('|')
+            currRecordNameToUse = currRecordNameParts[0] # as default, use first part as name
+            if len(currRecordNameParts)>1:
+                currRecordNameToUse = currRecordNameParts[nameId]
 
-    currRecordNameParts = currRecord.name.split('|')
-    currRecordNameToUse = currRecordNameParts[0] # as default, use first part as name
-    if len(currRecordNameParts)>1:
-      currRecordNameToUse = currRecordNameParts[nameId]
+            strFilePath = '{!s}/{!s}.txt'.format(strProtRefsDir, currRecordNameToUse )
+            with open(strFilePath, 'w') as bfProt:
+                bfProt.write(str(currRecord.seq))
 
-    strFilePath = '{!s}/{!s}.txt'.format(strProtRefsDir, currRecordNameToUse )
-    with open(strFilePath, 'w') as bfProt:
-            bfProt.write(str(currRecord.seq))
+            counter += 1
 
-    counter += 1
-
-
-  print('read and generated {:d} files'.format(counter))
+    print('read and generated {:d} files'.format(counter))
 
 def loadPepProbsFromCsv(strFilePath, delimiter, pepId, probId):
     listPeptideProb = []
@@ -40,6 +40,15 @@ def loadPepProbsFromCsv(strFilePath, delimiter, pepId, probId):
             listPeptideProb.append([row[pepId], float(row[probId])])
 
     return listPeptideProb
+
+def loadUniqProtsDicFromCsv(strFilePath, delimiter, protColId):
+    protsDic = {}
+    with open(strFilePath, "r") as bfCsv:
+        csvReader = csv.reader(bfCsv, delimiter = delimiter, skipinitialspace=True)
+        for row in csvReader:
+            protsDic[row[protColId]] = True
+
+    return protsDic
 
 def consolidatePepProbs(listPeptideProb):
     dicAll = {}
@@ -207,7 +216,7 @@ def fuRunAllProt_CleavageSites(listProtFileName, strBaseProtRefsPath, strSparseD
         return
     
     #print(listProtFileName)
-    pool = ThreadPool(8)
+    pool = ThreadPool(16)
     res = pool.map(fuRunProt, listProtFileName)
     pool.close() 
     pool.join() 
