@@ -8,9 +8,9 @@ import sys
 import os
 sys.path.append('../..')
 import prepLib
+in_strFastaFilename = '{!s}/data/protein/plos_HumanEKC/HumanEKC_uniprot-reviewed_up000005640_DECOY.fasta'.format(os.environ.get('HOME'))
+in_strPeptideFilename = '{!s}/data/protein/plos_HumanEKC/HumanEKC_dataset_peptide_identification_plos.txt'.format(os.environ.get('HOME'))
 
-in_strFastaFilename = '{!s}/data/protein/yeast/sc_SGD_0604.fasta'.format(os.environ.get('HOME'))
-in_strPeptideFilename = '{!s}/data/protein/yeast/Yeast_dataset_peptide_identification.txt'.format(os.environ.get('HOME'))
 in_strProtRefsDir = './protRefs'
 out_strOutputBaseDir = './sparseData2'
 
@@ -25,7 +25,7 @@ listPepProb = prepLib.consolidatePepProbs(listPepProb)
 
 
 # match peptides with proteins
-prepLib.fuRunAllProt(listProtRefFileName[0:-1], in_strProtRefsDir, out_strOutputBaseDir, listPepProb)
+prepLib.fuRunAllProt(listProtRefFileName, in_strProtRefsDir, out_strOutputBaseDir, listPepProb)
 
 
 strMetaInfoFilename = '{!s}/metaInfo.csv'.format(out_strOutputBaseDir)

@@ -15,7 +15,8 @@ in_strPeptideFilename = '{!s}/data/protein/sigma_49/Sigma_49.txt'.format(os.envi
 in_strProtRefsDir = './protRefs'
 out_strOutputBaseDir = './sparseData2'
 
-#prepLib.breakFasta(in_strFastaFilename, in_strProtRefsDir, 0)
+protsDic = prepLib.loadUniqProtsDicFromCsv(in_strPeptideFilename, "\t", 2)
+prepLib.breakFasta(in_strFastaFilename, in_strProtRefsDir, 0, protsDic)
 listProtRefFileName = prepLib.getProtRefFileNames(in_strProtRefsDir)
 
 # load peptide probabilities
