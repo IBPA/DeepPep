@@ -1,8 +1,5 @@
-# output: sparseData2: target.csv, metaInfo.csv, *.txt
-# input-verify-against: sigma_49_reference.csv
-# input-protein-reference:  Sigma_49_sequence.fasta  
-# input-peptides: ~/data/protein/sigma_49/Sigma_49.txt
-#a) 
+# Prerequisite: directories for "in_strProtRefsDir" and "sparseData2", should not contain any ".txt" file
+# Output: under sparseData2 directory: target.csv, metaInfo.csv, *.txt
 
 import sys
 import os
@@ -14,20 +11,15 @@ in_strPeptideFilename = '{!s}/data/protein/yeast/Yeast_dataset_peptide_identific
 in_strProtRefsDir = './protRefs'
 out_strOutputBaseDir = './sparseData2'
 
-protsDic = prepLib.loadUniqProtsDicFromCsv(in_strPeptideFilename, "\t", 1)
-prepLib.breakFasta(in_strFastaFilename, in_strProtRefsDir, 0, protsDic)
+protDic, pepDic = prepLib.loadProtPeptideDic(in_strPeptideFilename)
+prepLib.breakFasta(in_strFastaFilename, in_strProtRefsDir, protDic)
 listProtRefFileName = prepLib.getProtRefFileNames(in_strProtRefsDir)
 
-# load peptide probabilities
-listPepProb = prepLib.loadPepProbsFromCsv(in_strPeptideFilename, "\t", 0, 2)
-listPepProb = prepLib.consolidatePepProbs(listPepProb)
-
-
-
 # match peptides with proteins
-prepLib.fuRunAllProt(listProtRefFileName[0:-1], in_strProtRefsDir, out_strOutputBaseDir, listPepProb)
-
+prepLib.fuRunAllProt(listProtRefFileName, in_strProtRefsDir, out_strOutputBaseDir, protDic)
 
 strMetaInfoFilename = '{!s}/metaInfo.csv'.format(out_strOutputBaseDir)
 prepLib.fuSaveMetaInfo(out_strOutputBaseDir, strMetaInfoFilename, in_strProtRefsDir)
-prepLib.fuSavePepProbsTargetFromList('{!s}/target.csv'.format(out_strOutputBaseDir), listPepProb) 
+pepProbsList = sorted(list(pepDic.values()),key=lambda x: x[0])
+pepProbsList = [pepProbsList[i][1:3] for i in range(0,len(pepProbsList))]
+prepLib.fuSavePepProbsTargetFromList('{!s}/target.csv'.format(out_strOutputBaseDir), pepProbsList)

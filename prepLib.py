@@ -6,9 +6,8 @@ import re
 from multiprocessing.dummy import Pool as ThreadPool
 
 # Description: break the fasta file into multiple proteins, only save the ones provided in protsDic
-def breakFasta(strFastaFilename, strProtRefsDir, nameId, protsDic = None):
-    if nameId is None:
-        nameId = 0
+# Note: previous version (which some callers may be using), took nameID option to only save part of the name (separated by "|").
+def breakFasta(strFastaFilename, strProtRefsDir, protsDic = None):
 
   # create dir if missing
     if not os.path.exists(strProtRefsDir):
@@ -18,12 +17,7 @@ def breakFasta(strFastaFilename, strProtRefsDir, nameId, protsDic = None):
     counter = 0
     for currRecord in SeqIO.parse(strFastaFilename, "fasta"):
         if (protsDic is None) or (currRecord.name in  protsDic): # means: if protsDic is provided, then verify
-            currRecordNameParts = currRecord.name.split('|')
-            currRecordNameToUse = currRecordNameParts[0] # as default, use first part as name
-            if len(currRecordNameParts)>1:
-                currRecordNameToUse = currRecordNameParts[nameId]
-
-            strFilePath = '{!s}/{!s}.txt'.format(strProtRefsDir, currRecordNameToUse )
+            strFilePath = '{!s}/{!s}.txt'.format(strProtRefsDir, currRecord.name )
             with open(strFilePath, 'w') as bfProt:
                 bfProt.write(str(currRecord.seq))
 
@@ -49,6 +43,41 @@ def loadUniqProtsDicFromCsv(strFilePath, delimiter, protColId):
             protsDic[row[protColId]] = True
 
     return protsDic
+
+# Description: Load protein, peptide, and probablity info into single dictionary
+# Return: 
+#   1) Dictionary of proteins pointed to the corresponding peptides and probabilities
+#   2) Dictionary of peptides with associated probababilities
+def loadProtPeptideDic(strFilePath, delimiter = "\t", protColId = 1, pepColId = 0, probColId = 2):
+    protDic = {}
+    pepDic = {}
+
+    with open(strFilePath, "r") as bfCsv:
+        csvReader = csv.reader(bfCsv, delimiter = delimiter, skipinitialspace=True)
+        for row in csvReader:
+            strPep = row[pepColId]
+            strProt = row[protColId]
+            dProb = float(row[probColId])
+
+            # update peptide info
+            pepInfo = pepDic.get(strPep)
+            if pepInfo is None:
+                pepInfo = [len(pepDic), strPep, dProb]
+                pepDic[strPep] = pepInfo
+            else:
+                pepInfo[2] = max(dProb, pepInfo[2]) # Note: allways using 'max', if mean need a little more work
+            
+            
+            # update protInfo
+            protInfo = protDic.get(strProt)
+            if protInfo is None:
+                protInfo = {}
+                protDic[strProt] = protInfo
+
+            protInfo[strPep] = pepInfo
+        
+        return protDic, pepDic
+            
 
 def consolidatePepProbs(listPeptideProb):
     dicAll = {}
@@ -93,8 +122,9 @@ def fuFindPeptideMatch(strBaseProtRefsPath, strProtFileName, listPeptideProb):
     with open(strProtFileName, 'r') as bfProtFile:
         strProtSeq = bfProtFile.read().strip()
 
-        for i in range(0, len(listPeptideProb)):
-            strPepSeq = listPeptideProb[i][0]
+        for item in listPeptideProb:
+            i = item[0]
+            strPepSeq = item[1]
             listPeptideOnes = fuFindOnes(strProtSeq, strPepSeq)
 
             if listPeptideOnes and  len(listPeptideOnes) > 0:
@@ -114,10 +144,14 @@ def fuSaveProtPepOnes(strDir, strProtFileName, listProtPepOnes):
                 bfFile.write('|{:d},{:d}'.format(listRange[0], listRange[1]))
             bfFile.write("\n")
 
-def fuRunAllProt(listProtFileName, strBaseProtRefsPath, strSparseDir, listPeptideProb):
+def fuRunAllProt(listProtFileName, strBaseProtRefsPath, strSparseDir, protsDic):
 
     def fuRunProt(strProtFileName):
-      print("#")
+      print("started: " + strProtFileName)
+      # remove the trailing ".txt" from filename
+      strProtName = strProtFileName[0:-4]
+      listPeptideProb = protsDic[strProtName].values()
+
       listProtPepOnes = fuFindPeptideMatch(strBaseProtRefsPath , strProtFileName, listPeptideProb)
       if len(listProtPepOnes) > 0:
           fuSaveProtPepOnes(strSparseDir, strProtFileName, listProtPepOnes)
@@ -126,14 +160,14 @@ def fuRunAllProt(listProtFileName, strBaseProtRefsPath, strSparseDir, listPeptid
       else:
           return 0
 
-    '''
+    '''    
     isSave = fuRunProt(listProtFileName[1])
     print(listProtRefFileName[1])
     print(isSave)
-    '''
+    '''    
  
     print(listProtFileName)
-    pool = ThreadPool(24)
+    pool = ThreadPool(32)
     res = pool.map(fuRunProt, listProtFileName)
     pool.close() 
     pool.join() 
