@@ -37,7 +37,7 @@ function SparseBlockTemporalMaxPooling:pri_ensureTaIndices(input)
 	local nColumns = table.getn(input.taData)
 	for i=1, nColumns do
 		local taInputCurr = input.taData[i]
-		table.insert(self.taIndices, taInputCurr.teValue.new():long()) -- fixe just here, maybe not optimal!?
+		table.insert(self.taIndices, torch.Tensor()) -- Important Note: due to a bug in torch+nn, this is reverted back (instead of torch.LongTensor()). For this to work, need to be using torch @ commit: 1e5a315d03c91286d859512574d3b0b25e12d512, and nn @ commit: 1443cd7c2becd793b3d954144dcf4a1bf9947771
 	end
 end
 
@@ -67,7 +67,7 @@ function SparseBlockTemporalMaxPooling:updateOutput(input)
 																 self.output.taData[i],
 																 self.taIndices[i])
 	end
-	
+
 	return self.output
 end
 

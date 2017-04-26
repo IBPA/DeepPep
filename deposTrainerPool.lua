@@ -34,6 +34,16 @@ do
       taTrainParam.taOptimParams = {
         maxIter = 30 }
       taTrainParam.fuOptim = optim.cg
+      
+    elseif taTrainParam.strOptimMethod == "AdaGrad" then
+      taTrainParam.taOptimParams = {
+        learningRate = 0.5 }
+      taTrainParam.fuOptim = optim.adagrad
+      
+    elseif taTrainParam.strOptimMethod == "RMSprop" then
+      taTrainParam.taOptimParams = {
+        learningRate = 0.5 }
+      taTrainParam.fuOptim = optim.rmsprop
 
     else
       error("invalid operation")
