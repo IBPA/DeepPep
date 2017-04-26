@@ -390,6 +390,29 @@ do
 				self.mNet:add(self.mFirst)
 				self.mNet:add(self.mRest)
 		end,
+		function(self, taArchParams) -- 25
+			self.strArchDescription = "Arch25, Conv Configurable" 
+
+			local nOutputFrameConv1 = taArchParams.nOutputFrameConv1 or 8
+			local nWindowSizeConv1 = taArchParams.nWindowSizeConv1 or 8
+			local nWindowSizeMaxPool1 = taArchParams.nWindowSizeMaxPool1 or 8
+
+			self.mFirst = nn.Sequential()
+
+				self.mFirst:add(nn.SparseBlockTemporalConvolution(1, nOutputFrameConv1, nWindowSizeConv1))
+				self.mFirst:add(nn.SparseBlockReLU())
+				self.mFirst:add(nn.SparseBlockTemporalMaxPooling(nWindowSizeMaxPool1))
+
+
+				self.mFirst:add(nn.SparseBlockFlattenDim3())
+				self.mFirst:add(nn.SparseBlockLinear(2, false))
+
+			self.mRest = nn.SparseBlockToDenseLinear(1, false)
+
+			self.mNet = nn.Sequential()
+				self.mNet:add(self.mFirst)
+				self.mNet:add(self.mRest)
+		end,
 
 	}
 

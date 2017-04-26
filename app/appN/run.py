@@ -2,7 +2,12 @@ import sys
 import os
 import runLib
 # General setting
-dicTrainPredArgs = {'nArchId': 1}
+dicTrainPredArgs = {
+    'nArchId': 25,
+    'nOutputFrameConv1': 8,
+    'nWindowSizeConv1': 8,
+    'nWindowSizeMaxPool1': 8
+    }
 
 def getDefaultSetting(strDatabaseDir, dicTrainPredArgs):
     dicSetting = {

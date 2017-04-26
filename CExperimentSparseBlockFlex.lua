@@ -12,9 +12,9 @@ function CExperimentSparseBlockFlex:__init(oDataLoader, fuArchBuilder)
 	self.fuArchBuilder = fuArchBuilder
 end
 
-function CExperimentSparseBlockFlex:buildArch()
+function CExperimentSparseBlockFlex:buildArch(taArchParams)
   self.taMetaInfo = self.oDataLoader:loadSparseMetaInfo()
-	self.fuArchBuilder(self)
+	self.fuArchBuilder(self, taArchParams)
 end
 
 function CExperimentSparseBlockFlex:train(taTrainParams)
