@@ -27,7 +27,7 @@ def runOne(dicSetting):
     # (b) train, predict
     runLib.trainPred(dicSetting)
 
-    # (c) calculate AUC
+    # (c) ToDo: calculate AUC
 
 # 18mix:
 # Input: db.fasta, identification.tsv, ref.txt
