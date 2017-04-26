@@ -10,10 +10,10 @@ def getDefaultSetting(strDatabaseDir, dicTrainPredArgs):
         "strDatasetDir": strDatabaseDir,
         "strFastaDB": '{:s}/db.fasta'.format(strDatabaseDir),
         "strFilePathIdentification": '{:s}/identification.tsv'.format(strDatabaseDir),
+        "strFilePathPredOutput": '{:s}/pred.csv'.format(strDatabaseDir),
+        "strFilePathProtRefList": '{:s}/ref.txt'.format(strDatabaseDir),
         "strDirSparseData": '{:s}/sparseData'.format(strDatabaseDir),
-        "strDirPrepDataTmp": '{:s}/protRefs'.format(strDatabaseDir),
-        "strFilePathPredOutput": '{:s}/pred.tsv'.format(strDatabaseDir),
-        "strFilePathProtRefList": '{:s}/ref.txt'.format(strDatabaseDir)
+        "strDirPrepDataTmp": '{:s}/protRefs'.format(strDatabaseDir)
     }
 
     return dicSetting
@@ -30,5 +30,8 @@ def runOne(dicSetting):
     # (c) calculate AUC
 
 # 18mix:
+# Input: db.fasta, identification.tsv, ref.txt
+# Output: pred.csv
+# Note: Ensure Input files (with exact names) are copied under strDataDir directory apriori
 strDataDir = '{!s}/data/protein/18mix'.format(os.environ.get('HOME'))
 runOne(getDefaultSetting(strDataDir, dicTrainPredArgs))

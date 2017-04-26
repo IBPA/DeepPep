@@ -51,9 +51,9 @@ def updateTrainPredSettings(dicSetting):
         bfFile.write('strFilenameTarget,{:s}/target.csv\n'.format(dicSetting['strDirSparseData']))
         bfFile.write('strFilenameMetaInfo,{:s}/metaInfo.csv\n'.format(dicSetting['strDirSparseData']))
         bfFile.write('strFilenameProtRef,{:s}\n'.format(dicSetting['strFilePathProtRefList']))
-        bfFile.write('strFilenameProtInfo,{:s}/protInfo.csv\n'.format(dicSetting['strDirSparseData']))
-        bfFile.write('strFilenameExprDescription,{:s}/protInfo.csv.desc\n'.format(dicSetting['strDirSparseData']))
-        bfFile.write('strFilenameExprParams,{:s}/protInfo.csv.params\n'.format(dicSetting['strDirSparseData']))
+        bfFile.write('strFilenameProtInfo,{:s}\n'.format(dicSetting['strFilePathPredOutput']))
+        bfFile.write('strFilenameExprDescription,{:s}.desc\n'.format(dicSetting['strFilePathPredOutput']))
+        bfFile.write('strFilenameExprParams,{:s}.params\n'.format(dicSetting['strFilePathPredOutput']))
         bfFile.write('nRows,{:d}\n'.format(dicSetting['nRows']))
         
         for strKey, value in dicSetting['dicTrainPredArgs'].items():
