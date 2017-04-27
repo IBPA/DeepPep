@@ -225,18 +225,6 @@ function CExperimentSparseBlock:getConfidenceRange()
 end
 
 function CExperimentSparseBlock:saveResult(taProtInfo)
-  local taRef = self.oDataLoader:loadProtRef()
-
-  for key, value in pairs(taProtInfo) do
-    local strProtName = value[1]
-
-    if taRef[strProtName] == nil then
-      table.insert(value, 0)
-    else
-      table.insert(value, 1)
-    end
-  end
-
   self.oDataLoader:saveProtInfo(taProtInfo)
 	self.oDataLoader:saveModelParams(self.mNet:getParameters())
 

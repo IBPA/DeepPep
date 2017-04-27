@@ -205,18 +205,6 @@ function CExperiment:getConfidenceRange(nStart, nEnd)
 end
 
 function CExperiment:saveResult(taProtInfo)
-  local taRef = self.oDataLoader:loadProtRef()
-
-  for key, value in pairs(taProtInfo) do
-    local strProtName = value[1]
-
-    if taRef[strProtName] == nil then
-      table.insert(value, 0)
-    else
-      table.insert(value, 1)
-    end
-  end
-
   self.oDataLoader:saveProtInfo(taProtInfo)
 end
 

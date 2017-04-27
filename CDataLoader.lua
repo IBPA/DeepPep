@@ -151,23 +151,10 @@ function CDataLoader:loadTarget()
   return teResult
 end
 
-function CDataLoader:loadProtRef()
-  local strFilename = self.exprSettings.strFilenameProtRef
-  local taLoadParams = {header=false, separator=","}
-  local f = csv.open(strFilename, taLoadParams)
-
-  local taRecords = {}
-  for fields in f:lines() do
-    taRecords[fields[1]] = 1
-  end
-
-  return taRecords
-end
-
 function CDataLoader:saveProtInfo(taProtInfo)
   local file = io.open(self.exprSettings.strFilenameProtInfo, "w")
   for key, value in pairs(taProtInfo) do
-    file:write(string.format("%s,%.12f,%d\n", value[1], value[2], value[3]))
+    file:write(string.format("%s,%.12f\n", value[1], value[2]))
   end
 
   file:close()
