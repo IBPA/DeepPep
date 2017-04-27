@@ -413,6 +413,20 @@ do
 				self.mNet:add(self.mFirst)
 				self.mNet:add(self.mRest)
 		end,
+		function(self) -- 26 Linear
+			self.strArchDescription = "Linear ...." 
+
+			self.mFirst = nn.Sequential()
+
+				self.mFirst:add(nn.SparseBlockFlattenDim3())
+				self.mFirst:add(nn.SparseBlockLinear(1, false))
+
+			self.mRest = nn.SparseBlockToDenseLinear(1, false)
+
+			self.mNet = nn.Sequential()
+				self.mNet:add(self.mFirst)
+				self.mNet:add(self.mRest)
+		end,
 
 	}
 
