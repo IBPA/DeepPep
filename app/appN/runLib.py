@@ -63,5 +63,5 @@ def updateTrainPredSettings(dicSetting):
 def trainPred(dicSetting):
     strFilePathTrainPred = updateTrainPredSettings(dicSetting)
     strCommand = "th trainPred.lua {:s}".format(strFilePathTrainPred)
-    print("Run:{:s} {:s}".format(strCommand, strFilePathTrainPred))
+    print("Run:{:s}".format(strCommand))
     subprocess.call([strCommand], shell=True)
