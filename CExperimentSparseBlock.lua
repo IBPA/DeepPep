@@ -11,10 +11,14 @@ require './SparseBlockToDenseLinear.lua'
 require './SparseBlockDropout.lua'
 require './SparseBlockSum.lua'
 
+require('../MyCommon/TimeTracker.lua')
+
 local trainerPool = require('./deposTrainerPool.lua')
 local deposUtil = deposUtil or require('./deposUtil.lua')
 
 CExperimentSparseBlock = torch.class("CExperimentSparseBlock")
+
+tt = TimeTracker.new()
 
 function CExperimentSparseBlock:__init(oDataLoader)
   self.oDataLoader = oDataLoader
@@ -161,10 +165,13 @@ function CExperimentSparseBlock.loadFromFile(strFilePath)
   return oExperiment
 end
 
+
 function CExperimentSparseBlock:getConfidenceOne(teOutputAll, taOutputFirst, taFirstProt, taInput)
   -- 1) save the prot column we are about the replace
+  tt:r("getConfidenceOne-1")
 	local teFirstProtValueOrig = taFirstProt.teValue:clone()
 	
+  tt:r("getConfidenceOne-2")
 	-- 2) replace the protein column with teDefault/zero
 	if taFirstProt.teDefault ~= nil then
 		local teTmpView = taFirstProt.teDefault:view(1, taFirstProt.teDefault:size(1))
@@ -173,17 +180,40 @@ function CExperimentSparseBlock:getConfidenceOne(teOutputAll, taOutputFirst, taF
 		taFirstProt.teValue:zero()
 	end
 
+  tt:r("getConfidenceOne-3")
   -- 3) calculate the final prediction
 	local teOutputAllNew = self.mRest:forward(taOutputFirst):clone()
 
+  tt:r("getConfidenceOne-4")
   -- 4) calculate the difference
   local teOutputResidual = torch.add(torch.mul(teOutputAllNew, -1),
                                      teOutputAll):abs():squeeze()
 	
 
+  tt:r("getConfidenceOne-5")
   -- 5) replace the orig column
 	taFirstProt.teValue:copy(teFirstProtValueOrig)
 
+  tt:r("getConfidenceOne-6")
+  -- 6) calculate prot_pepdide confidences
+	local dSum = self:getNormalizedResidualSum(taInput, teOutputResidual)
+	return dSum /teOutputAll:size(1)
+end
+
+
+function CExperimentSparseBlock:getConfidenceOneVFast(teOutputAll, taOutputFirst, taFirstProt, taInput, nProtId)
+  -- 1) save the prot column we are about the replace
+  tt:r("getConfidenceOneVFast-1")
+	local teFirstProtValueOrig = taFirstProt.teValue:clone()
+	
+
+  tt:r("getConfidenceOneVFast-2")
+  -- 3) calculate the columns contribution in in final prediction
+    self.mRest:pub_setColIds(nProtId)
+	local teOutputResidual = self.mRest:forward(taOutputFirst):clone():abs():squeeze()
+	
+
+  tt:r("getConfidenceOneVFast-3")
   -- 6) calculate prot_pepdide confidences
 	local dSum = self:getNormalizedResidualSum(taInput, teOutputResidual)
 	return dSum /teOutputAll:size(1)
@@ -203,24 +233,29 @@ function CExperimentSparseBlock:getNormalizedResidualSum(taInput, teOutputResidu
 end
 
 function CExperimentSparseBlock:getConfidenceRange()
-  sys.tic()
 --	self.mNet:evaluate()
-
+  tt:start()
+  
 	local nEnd = #self.taMetaInfo
 	local taInput = self.oDataLoader:loadSparseBlockInput(self.taMetaInfo)
+  tt:r("init-1")
+  
   local teOutputAll = self.mNet:forward(taInput):clone()
+  tt:r("init-2")
 	local taOutputFirst = self.mFirst:forward(taInput) 
+  tt:r("init-3")
 
   local taProtInfo = {}
 	for i=1, nEnd do
-		local dConf = self:getConfidenceOne(teOutputAll, taOutputFirst, taOutputFirst.taData[i], taInput.taData[i])
+		local dConf = self:getConfidenceOneVFast(teOutputAll, taOutputFirst, taOutputFirst.taData[i], taInput.taData[i], i)
 		local strProtFilename = self.taMetaInfo[i].strFilename
     local strProtName = strProtFilename:sub(1, strProtFilename:len() -4)  -- remove the ".txt" from the end
     local taRow = { strProtName, dConf }
     table.insert(taProtInfo, taRow)
 	end
 
-  print("confidence total elapsed time(s):" .. sys.toc())
+  tt:r("End")
+  tt:printSummary()
   return taProtInfo
 end
 

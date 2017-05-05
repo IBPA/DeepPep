@@ -117,6 +117,21 @@ function SparseBlockToDenseLinear:pri_updateOutput_column(taInput, teWeight)
 	self.outputBufferB:scatter(1, teDstIdx, 0)
 end
 
+function SparseBlockToDenseLinear:pub_setColIds(nColId)
+    self.nPubColId = nColId
+end
+
+-- Description: pri_getColIds: enables calculating a given column only.
+function SparseBlockToDenseLinear:pri_getColIds(input)
+  if self.nPubColId then
+    local taR = {}
+    taR[self.nPubColId] = "this very value should not be read"
+    return taR
+  end
+  
+  return input.taData
+end
+
 function SparseBlockToDenseLinear:updateOutput(input)
 	self:pri_ensureWeight(input)
 	self:pri_ensureOutput(input)
@@ -127,10 +142,8 @@ function SparseBlockToDenseLinear:updateOutput(input)
 		self.output:add(teBiasExpanded)
 	end
 
-
-
-	local nColumns = table.getn(input.taData)
-	for i=1, nColumns do
+  local taCols = self:pri_getColIds(input)
+	for i, _ in pairs(taCols) do
 		self:pri_updateOutput_column(input.taData[i], 
 																 self:pri_getSubWeight(i))
 	end
