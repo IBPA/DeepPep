@@ -380,7 +380,6 @@ do
 --				self.mFirst:add(nn.SparseBlockReLU())
 --				self.mFirst:add(nn.SparseBlockTemporalMaxPooling(4))
 
-
 				self.mFirst:add(nn.SparseBlockFlattenDim3())
 				self.mFirst:add(nn.SparseBlockLinear(2, false))
 
@@ -404,6 +403,7 @@ do
 				self.mFirst:add(nn.SparseBlockTemporalMaxPooling(nWindowSizeMaxPool1))
 
 
+
 				self.mFirst:add(nn.SparseBlockFlattenDim3())
 				self.mFirst:add(nn.SparseBlockLinear(2, false))
 
@@ -420,6 +420,27 @@ do
 
 				self.mFirst:add(nn.SparseBlockFlattenDim3())
 				self.mFirst:add(nn.SparseBlockLinear(1, false))
+
+			self.mRest = nn.SparseBlockToDenseLinear(1, false)
+
+			self.mNet = nn.Sequential()
+				self.mNet:add(self.mFirst)
+				self.mNet:add(self.mRest)
+		end,
+    function(self, taArchParams) -- 27
+
+      local nOutputPerColumn = taArchParams and taArchParams.nOutputPerColumn or 10
+      local nFirstLayers = taArchParams and taArchParams.nFirstLayers or 0
+      self.strArchDescription = string.format("Lin27, Deep Linear Configurable, nOutputPerColumn:%d, nFirstLayers:%d",  nOutputPerColumn, nFirstLayers)
+
+			self.mFirst = nn.Sequential()
+
+        self.mFirst:add(nn.SparseBlockFlattenDim3())
+        
+        for i=1, nFirstLayers do
+          self.mFirst:add(nn.SparseBlockLinear(nOutputPerColumn, false))
+          self.mFirst:add(nn.SparseBlockReLU(true, false, 0, 1))
+        end
 
 			self.mRest = nn.SparseBlockToDenseLinear(1, false)
 

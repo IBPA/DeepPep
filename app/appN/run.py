@@ -3,10 +3,9 @@ import os
 import runLib
 # General setting
 dicTrainPredArgs = {
-    'nArchId': 25,
-    'nOutputFrameConv1': 8,
-    'nWindowSizeConv1': 8,
-    'nWindowSizeMaxPool1': 8
+    'nArchId': 27,
+    'nOutputPerColumn': 10,
+    'nFirstLayers': 1,
     }
 
 def getDefaultSetting(strDatabaseDir, dicTrainPredArgs):

@@ -33,9 +33,8 @@ oExperiment:buildArch(taSetting)
 oExperiment:roundTrip()
 
 
-local taTrainParams = trainerPool.getDefaultTrainParams(nil, "SGD", 200)
-taTrainParams.taOptimParams.momentum = 0.5
-taTrainParams.taOptimParams.learningRate = 1.0
+local taTrainParams = trainerPool.getDefaultTrainParams(nil, "RMSprop", 100)
+taTrainParams.taOptimParams.learningRate = 0.001
 oExperiment:train(taTrainParams)
 
 

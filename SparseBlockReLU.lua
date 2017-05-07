@@ -2,36 +2,51 @@ local SparseBlockReLU, parent = torch.class('nn.SparseBlockReLU', 'nn.Module')
 
 -- Module description:
 -- strict limitted support assuming: a) inplace update, b) parallel inputs with shared default value, c) fullbatch, d) no bias in prev layers which enables for sparse backpropagaion.
-function SparseBlockReLU:__init(isInplace, isFullGradInput)
+function SparseBlockReLU:__init(isInplace, isFullGradInput, dMin, dMax)
 	self.isInplace = isInplace or true
 	self.isFullGradInput = isFullGradInput or false
+  self.dMin = dMin or 0
+  self.dMax = dMax or math.huge
 	self.output = {}
 	self.gradInput = {}
+  
+  
+  self.fuApplyTensor = function(x)
+    if x <= self.dMin then
+      return self.dMin
+    end
+    
+    if x >= self.dMax then
+      return self.dMax
+    end
+  end
+  
+  self.fuApplyTensor2 = function(x, y)
+    if y <= self.dMin then
+      return self.dMin
+    end
+    
+    if y >= self.dMax then
+      return self.dMax
+    end
+  end
+  
 end
 
-local function pri_ApplyTensor(x)
-	if x <= 0 then
-		return 0
-	end
-end
 
-local function pri_ApplyTensor2(x, y)
-	if y <= 0 then
-		return 0
-	end
-end
+
 
 function SparseBlockReLU:updateOutput(input)
 	assert(self.isInplace, "only supporting inplace for now")
 
 	-- update default:
 	if input.teDefault ~= nil then
-		input.teDefault:apply(pri_ApplyTensor)
+		input.teDefault:apply(self.fuApplyTensor)
 	end
 
 	-- update data
 	for key, taBlockSparse in pairs(input.taData) do
-		taBlockSparse.teValue:apply(pri_ApplyTensor)
+		taBlockSparse.teValue:apply(self.fuApplyTensor)
 	end
 
 	self.output = input
@@ -45,7 +60,7 @@ function SparseBlockReLU:updateGradInput(input, gradOutput)
 
 	-- update default
 	if input.teDefault ~= nil then
-		gradOutput.teDefault:map(input.teDefault, pri_ApplyTensor2)
+		gradOutput.teDefault:map(input.teDefault, self.fuApplyTensor2)
 	end
 
 	-- update data
@@ -53,7 +68,7 @@ function SparseBlockReLU:updateGradInput(input, gradOutput)
 	for i=1, nColumns do
 			local taInputCurr = input.taData[i]
 			local taGradOutputCurr = gradOutput.taData[i]
-			taGradOutputCurr.teValue:map(taInputCurr.teValue, pri_ApplyTensor2)
+			taGradOutputCurr.teValue:map(taInputCurr.teValue, self.fuApplyTensor2)
 	end
 	
 	self.gradInput = gradOutput
