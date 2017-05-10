@@ -448,6 +448,43 @@ do
 				self.mNet:add(self.mFirst)
 				self.mNet:add(self.mRest)
 		end,
+		function(self, taArchParams) -- 28
+			self.strArchDescription = "Arch28, Conv Configurable" 
+
+			local nOutputFrameConv1 = taArchParams and taArchParams.nOutputFrameConv1 or 8
+			local nWindowSizeConv1 = taArchParams and taArchParams.nWindowSizeConv1 or 8
+			local nWindowSizeMaxPool1 = taArchParams and taArchParams.nWindowSizeMaxPool1 or 2
+
+			self.mFirst = nn.Sequential()
+
+				self.mFirst:add(nn.SparseBlockTemporalConvolution(1, nOutputFrameConv1, nWindowSizeConv1))
+				self.mFirst:add(nn.SparseBlockReLU())
+				self.mFirst:add(nn.SparseBlockTemporalMaxPooling(nWindowSizeMaxPool1))
+
+				self.mFirst:add(nn.SparseBlockTemporalConvolution(nOutputFrameConv1, nOutputFrameConv1, nWindowSizeConv1))
+				self.mFirst:add(nn.SparseBlockReLU())
+				self.mFirst:add(nn.SparseBlockTemporalMaxPooling(nWindowSizeMaxPool1, nWindowSizeMaxPool1, true))
+
+
+				self.mFirst:add(nn.SparseBlockTemporalConvolution(nOutputFrameConv1, nOutputFrameConv1, nWindowSizeConv1))
+				self.mFirst:add(nn.SparseBlockReLU())
+				self.mFirst:add(nn.SparseBlockTemporalMaxPooling(nWindowSizeMaxPool1, nWindowSizeMaxPool1, true))
+
+
+				self.mFirst:add(nn.SparseBlockTemporalConvolution(nOutputFrameConv1, nOutputFrameConv1, 3))
+				self.mFirst:add(nn.SparseBlockReLU())
+				self.mFirst:add(nn.SparseBlockTemporalMaxPooling(nWindowSizeMaxPool1, nWindowSizeMaxPool1, true))
+
+
+				self.mFirst:add(nn.SparseBlockFlattenDim3())
+				self.mFirst:add(nn.SparseBlockLinear(2, false))
+
+			self.mRest = nn.SparseBlockToDenseLinear(1, false)
+
+			self.mNet = nn.Sequential()
+				self.mNet:add(self.mFirst)
+				self.mNet:add(self.mRest)
+		end,
 
 	}
 
