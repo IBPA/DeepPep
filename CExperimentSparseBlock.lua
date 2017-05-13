@@ -220,7 +220,7 @@ end
 
 function CExperimentSparseBlock:getConfidenceRange()
   sys.tic()
---	self.mNet:evaluate()
+	self.mNet:evaluate()
   
 	local nEnd = #self.taMetaInfo
 	local taInput = self.oDataLoader:loadSparseBlockInput(self.taMetaInfo)
