@@ -451,37 +451,34 @@ do
 		function(self, taArchParams) -- 28
 			self.strArchDescription = "Arch28, Conv Configurable" 
 
-			local nOutputFrameConv1 = taArchParams and taArchParams.nOutputFrameConv1 or 8
 			local nWindowSizeConv1 = taArchParams and taArchParams.nWindowSizeConv1 or 8
-			local nWindowSizeMaxPool1 = taArchParams and taArchParams.nWindowSizeMaxPool1 or 2
+			local nWindowSizeMaxPool1 = taArchParams and taArchParams.nWindowSizeMaxPool1 or 3
 
 			local dW = 3
 
 			self.mFirst = nn.Sequential()
 
-				self.mFirst:add(nn.SparseBlockTemporalConvolution(1, nOutputFrameConv1, nWindowSizeConv1, dW))
+				self.mFirst:add(nn.SparseBlockTemporalConvolution(1, 5, nWindowSizeConv1, dW, true))
 				self.mFirst:add(nn.SparseBlockReLU())
-				self.mFirst:add(nn.SparseBlockTemporalMaxPooling(nWindowSizeMaxPool1))
+				self.mFirst:add(nn.SparseBlockTemporalMaxPooling(nWindowSizeMaxPool1, nWindowSizeMaxPool1, true))
 				self.mFirst:add(nn.SparseBlockDropout(0.2))
 
-				self.mFirst:add(nn.SparseBlockTemporalConvolution(nOutputFrameConv1, nOutputFrameConv1, nWindowSizeConv1, dW))
+				self.mFirst:add(nn.SparseBlockTemporalConvolution(5, 10, nWindowSizeConv1, dW, true))
 				self.mFirst:add(nn.SparseBlockReLU())
 				self.mFirst:add(nn.SparseBlockTemporalMaxPooling(nWindowSizeMaxPool1, nWindowSizeMaxPool1, true))
 				self.mFirst:add(nn.SparseBlockDropout(0.2))
 
 
-				self.mFirst:add(nn.SparseBlockTemporalConvolution(nOutputFrameConv1, nOutputFrameConv1, nOutputFrameConv1, dW, true))
+				self.mFirst:add(nn.SparseBlockTemporalConvolution(10, 15, nWindowSizeConv1, dW, true))
 				self.mFirst:add(nn.SparseBlockReLU())
 				self.mFirst:add(nn.SparseBlockTemporalMaxPooling(nWindowSizeMaxPool1, nWindowSizeMaxPool1, true))
 				self.mFirst:add(nn.SparseBlockDropout(0.2))
 
 
---				--[[
-				self.mFirst:add(nn.SparseBlockTemporalConvolution(nOutputFrameConv1, nOutputFrameConv1, 3, dW, true))
+				self.mFirst:add(nn.SparseBlockTemporalConvolution(15, 20, nWindowSizeConv1, dW, true))
 				self.mFirst:add(nn.SparseBlockReLU())
 				self.mFirst:add(nn.SparseBlockTemporalMaxPooling(nWindowSizeMaxPool1, nWindowSizeMaxPool1, true))
 				self.mFirst:add(nn.SparseBlockDropout(0.2))
-				--]]
 
 
 				self.mFirst:add(nn.SparseBlockFlattenDim3())

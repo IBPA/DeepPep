@@ -14,9 +14,12 @@ function SparseBlockTemporalConvolution:__init(inputFrameSize, outputFrameSize, 
    self.dW = dW
 
 	 self.isRelax = isRelax or false
-	 if self.isRelax then
-			assert(inputFrameSize == outputFrameSize, "isRelax is only supported when inputFrameSize == outputFrameSize")
-	 end
+
+-- ToDo: removed this limitation, fully consider ramifications 
+-- 			*** But it seems fine for the case that when a protein is skipped, it continues to get skipped in the remaining convolutional layers ***
+--	 if self.isRelax then
+--			assert(inputFrameSize == outputFrameSize, "isRelax is only supported when inputFrameSize == outputFrameSize")
+--	 end
 
    self.weight = torch.Tensor(outputFrameSize, inputFrameSize*kW)
    self.gradWeight = torch.Tensor(outputFrameSize, inputFrameSize*kW)
