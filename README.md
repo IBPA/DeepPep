@@ -5,6 +5,7 @@ Requirements
 * torch7
 * git clone https://github.com/ameenetemady/MyCommon # includes some utility code
 * git clone https://github.com/ameenetemady/depos #this repository
+* Install SparseNN from [here](https://github.com/ameenetemady/SparseNN/)
 * luarocks install cephes
 * luarocks install csv
 
