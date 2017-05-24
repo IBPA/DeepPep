@@ -1,7 +1,6 @@
 require('./CExperimentSparseBlock.lua')
+
 require('./SparseCleavageProb.lua')
-require('./SparseBlockToDenseSum.lua')
-require('./SparseBlockToDenseMul.lua')
 require('./SparseCleavageProbC.lua')
 require('./SparseBlockLinearNonNegativeW.lua')
 

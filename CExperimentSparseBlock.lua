@@ -1,15 +1,6 @@
 require 'nn'
 require 'sys'
-
---ToDo: implement:
-require('./SparseBlockReLU.lua')
-require './SparseBlockTemporalConvolution.lua'
-require './SparseBlockTemporalMaxPooling.lua'
-require './SparseBlockFlattenDim3.lua'
-require './SparseBlockLinear.lua'
-require './SparseBlockToDenseLinear.lua'
-require './SparseBlockDropout.lua'
-require './SparseBlockSum.lua'
+require 'sparsenn'
 
 local trainerPool = require('./deposTrainerPool.lua')
 local deposUtil = deposUtil or require('./deposUtil.lua')
