@@ -439,7 +439,7 @@ do
         
         for i=1, nFirstLayers do
           self.mFirst:add(nn.SparseBlockLinear(nOutputPerColumn, false))
-          self.mFirst:add(nn.SparseBlockReLU(true, false, 0, 1))
+          self.mFirst:add(nn.SparseBlockReLU(0, 1))
         end
 
 			self.mRest = nn.SparseBlockToDenseLinear(1, false)
