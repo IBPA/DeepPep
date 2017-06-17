@@ -26,8 +26,11 @@ git clone https://github.com/ameenetemady/DeepPep.git
 
 Upon completion, ```pred.csv``` will contain the predicted protein identification probabilities.
 
+### Benchmark Datasets
+There are [7 example datasets](./data) (used for benchmarking in the paper). Each dataset is generated from MS/MS raw files using TPP pipeline.
+
 ### Citation
- M. Kim, A. Eetemadi, and I. Tagkopoulos, “DeepPep: deep proteome inference from peptide profiling”, PLoS Computational Biology (2017) *accepted*
+ M. Kim, A. Eetemadi, and I. Tagkopoulos, “DeepPep: deep proteome inference from peptide profiling”, PLoS Computational Biology (2017) *under review*
 
 ### Licence
 See the LICENSE.txt file for license rights and limitations (MIT).
