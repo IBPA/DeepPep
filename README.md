@@ -29,7 +29,9 @@ git clone https://github.com/DeepPep/DeepPep.git
 Upon completion, ```pred.csv``` will contain the predicted protein identification probabilities.
 
 ### Benchmark Datasets
-There are [7 example datasets](https://github.com/DeepPep/public/tree/master/data) (used for benchmarking in the paper). Each dataset is generated from MS/MS raw files using TPP pipeline.
+There are [7 example datasets](https://github.com/DeepPep/public/tree/master/data) (used for benchmarking in the paper). Each dataset is generated from MS/MS raw files using TPP pipeline. For example, to run the [18Mix benchmark dataset](https://github.com/DeepPep/public/tree/master/data/18Mix), simply run the following:
+
+<code>python run.py data/18Mix</code>
 
 ### Citation
  M. Kim, A. Eetemadi, and I. Tagkopoulos, “DeepPep: deep proteome inference from peptide profiling”, PLoS Computational Biology (2017) *under review*
