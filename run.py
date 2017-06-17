@@ -3,8 +3,8 @@ import os
 import runLib
 # General setting
 dicTrainPredArgs = {
-    'nArchId': 27,
-    'nOutputPerColumn': 10,
+    'nArchId': 24,
+    'nOutputPerColumn': 5,
     'nFirstLayers': 1,
     }
 
@@ -37,5 +37,5 @@ def runOne(dicSetting):
 # Input: db.fasta, identification.tsv, ref.txt
 # Output: pred.csv
 # Note: Ensure Input files (with exact names) are copied under strDataDir directory apriori
-strDataDir = '{!s}/data/protein/18mix'.format(os.environ.get('HOME'))
+strDataDir = sys.argv[1]
 runOne(getDefaultSetting(strDataDir, dicTrainPredArgs))

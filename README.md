@@ -33,7 +33,7 @@ There are [7 example datasets](./data) (used for benchmarking in the paper). Eac
  M. Kim, A. Eetemadi, and I. Tagkopoulos, “DeepPep: deep proteome inference from peptide profiling”, PLoS Computational Biology (2017) *under review*
 
 ### Licence
-See the LICENSE.txt file for license rights and limitations (MIT).
+See the LICENSE.txt file for license rights and limitations (Apache2.0).
 
 ### Aknowledgement
 This work was supported by a grant from Mars, Inc. and NSF award 1516695.
