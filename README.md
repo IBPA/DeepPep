@@ -15,7 +15,7 @@ DeepPep, is a **protein identification** software which uses deep-convolutional 
 ### Installation
 ```
 git clone https://github.com/ameenetemady/MyCommon.git
-git clone https://github.com/ameenetemady/DeepPep.git
+git clone https://github.com/DeepPep/public.git
 ```
 
 ### Running
