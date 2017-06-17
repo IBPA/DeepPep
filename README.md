@@ -1,3 +1,5 @@
+### What is DeepPep?
+
 DeepPep, is a **protein identification** software which uses deep-convolutional neural network to predict the protein set from a proteomics mixture, given the sequence universe of possible proteins and a target peptide profile.
 
 ### Dependencies
@@ -33,7 +35,7 @@ There are [7 example datasets](./data) (used for benchmarking in the paper). Eac
  M. Kim, A. Eetemadi, and I. Tagkopoulos, “DeepPep: deep proteome inference from peptide profiling”, PLoS Computational Biology (2017) *under review*
 
 ### Licence
-See the LICENSE.txt file for license rights and limitations (Apache2.0).
+See the [LICENSE.txt](./LICENSE.txt) file for license rights and limitations (Apache2.0).
 
 ### Aknowledgement
 This work was supported by a grant from Mars, Inc. and NSF award 1516695.
