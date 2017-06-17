@@ -1,5 +1,3 @@
-
-# Purpose
 DeepPep, is a **protein identification** software which uses deep-convolutional neural network to predict the protein set from a proteomics mixture, given the sequence universe of possible proteins and a target peptide profile.
 
 # Dependencies
