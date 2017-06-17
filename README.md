@@ -1,28 +1,39 @@
-# DePos
 
-Requirements 
-* python3.4/python3.5 
-* torch7
-* git clone https://github.com/ameenetemady/MyCommon # includes some utility code
-* git clone https://github.com/ameenetemady/depos #this repository
-* Install SparseNN from [here](https://github.com/ameenetemady/SparseNN/)
+# Purpose
+DeepPep, is a **protein identification** software which uses deep-convolutional neural network to predict the protein set from a proteomics mixture, given the sequence universe of possible proteins and a target peptide profile.
+
+# Dependencies
+* [torch7](http://torch.ch/docs/getting-started.html)
 * luarocks install cephes
 * luarocks install csv
+* [SparseNN](https://github.com/ameenetemady/SparseNN/)
+* python3.4 or above
+* [biopython](http://biopython.org/wiki/Download)
 
-Running DePos consists of three main steps:
-##Step 1 - Data Preparation (generating sparse input format)#
-* Create a directory under app (example directory “app5_18mix” is used here)
-* Copy file experiment_3_multiArch.lua, lSettings.lua, prepData2.py from app5_18mix and create three empty directories under (app5_18mix):
-  1. sparseData2 
-  2. protRefs 
-  3. model
-* Update prepData2.py with paths of the peptide identification and protein  database (.fasta file)  in in_strFastaFilename and in_strPeptideFilename variables.
-* Run “python3.4 prepData2.py” (assuming necessary packages installed using pip including the “Bio” package)
 
-##Step 2 - Training, Prediction#
-* Update three variables in lSettings.lua: 
-  1. “strBaseDir” to the directory path, 
-  2. “strFilenameProtRef” to the protein reference file (for evaluating final performance) (and don’t for get to copy the file to sparseData2 directory), 
-  3. nRows to the number of rows in sparseData/target.csv
-* Run:  th experiment_3_multiArch.lua 24
-* Run: python3.4 ../../getAUC.py
+
+# Installation
+```
+git clone https://github.com/ameenetemady/MyCommon.git
+git clone https://github.com/ameenetemady/DeepPep.git
+```
+
+# Running
+* Step1: edit run.py, and set "strDataDir" to a directory containing your input files (with exact names):
+
+  * ```identification.tsv```: tab-delimeted file:  **column1**: peptide, **column2**: protein name, **column3**: identification probability
+  * ```db.fasta```: reference protein database in fasta format.
+
+* Step2: ```python run.py```
+
+Upon completion, ```pred.csv``` will contain the predicted protein identification probabilities.
+
+# Citation
+ M. Kim, A. Eetemadi, and I. Tagkopoulos, “DeepPep: deep proteome inference from peptide profiling”, PLoS Computational Biology (2017) accepted
+
+# Licence
+See the LICENSE.txt file for license rights and limitations (MIT).
+
+# Aknowledgement
+This work was supported by a grant from Mars, Inc. and NSF award 1516695.
+
