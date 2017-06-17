@@ -37,6 +37,6 @@ There are [7 example datasets](./data) (used for benchmarking in the paper). Eac
 ### Licence
 See the [LICENSE](./LICENSE) file for license rights and limitations (Apache2.0).
 
-### Aknowledgement
+### Acknowledgement
 This work was supported by a grant from Mars, Inc. and NSF award 1516695.
 
