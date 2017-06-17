@@ -1,6 +1,6 @@
 DeepPep, is a **protein identification** software which uses deep-convolutional neural network to predict the protein set from a proteomics mixture, given the sequence universe of possible proteins and a target peptide profile.
 
-# Dependencies
+### Dependencies
 * [torch7](http://torch.ch/docs/getting-started.html)
 * luarocks install cephes
 * luarocks install csv
@@ -10,13 +10,13 @@ DeepPep, is a **protein identification** software which uses deep-convolutional 
 
 
 
-# Installation
+### Installation
 ```
 git clone https://github.com/ameenetemady/MyCommon.git
 git clone https://github.com/ameenetemady/DeepPep.git
 ```
 
-# Running
+### Running
 * Step1: edit run.py, and set "strDataDir" to a directory containing your input files (with exact names):
 
   * ```identification.tsv```: tab-delimeted file:  **column1**: peptide, **column2**: protein name, **column3**: identification probability
@@ -26,12 +26,12 @@ git clone https://github.com/ameenetemady/DeepPep.git
 
 Upon completion, ```pred.csv``` will contain the predicted protein identification probabilities.
 
-# Citation
- M. Kim, A. Eetemadi, and I. Tagkopoulos, “DeepPep: deep proteome inference from peptide profiling”, PLoS Computational Biology (2017) accepted
+### Citation
+ M. Kim, A. Eetemadi, and I. Tagkopoulos, “DeepPep: deep proteome inference from peptide profiling”, PLoS Computational Biology (2017) *accepted*
 
-# Licence
+### Licence
 See the LICENSE.txt file for license rights and limitations (MIT).
 
-# Aknowledgement
+### Aknowledgement
 This work was supported by a grant from Mars, Inc. and NSF award 1516695.
 
