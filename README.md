@@ -36,7 +36,7 @@ python run.py data/18Mix
 ```
 ### Support
 
-If you have any questions about DeepPep, please contact Minseung Kim (msgkim@ucdavis.edu) or Ameen Eetemadi (eetemdadi@ucdavis.edu).
+If you have any questions about DeepPep, please contact Minseung Kim (msgkim@ucdavis.edu) or Ameen Eetemadi (eetemadi@ucdavis.edu).
 
 ### Citation
  M. Kim, A. Eetemadi, and I. Tagkopoulos, “DeepPep: deep proteome inference from peptide profiling”, PLoS Computational Biology (2017) *under review*
