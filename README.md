@@ -17,12 +17,12 @@ git clone https://github.com/ameenetemady/DeepPep.git
 ```
 
 ### Running
-* Step1: edit run.py, and set "strDataDir" to a directory containing your input files (with exact names):
+* Step1: prepare a directory containing your input files (with exact names):
 
   * ```identification.tsv```: tab-delimeted file:  **column1**: peptide, **column2**: protein name, **column3**: identification probability
   * ```db.fasta```: reference protein database in fasta format.
 
-* Step2: ```python run.py```
+* Step2: ```python run.py directoryName```
 
 Upon completion, ```pred.csv``` will contain the predicted protein identification probabilities.
 
