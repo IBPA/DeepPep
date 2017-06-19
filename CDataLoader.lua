@@ -6,25 +6,6 @@ function CDataLoader:__init(exprSettings)
   self.exprSettings = exprSettings
 end
 
-function CDataLoader:loadSparseInput()
-  local strFilename = self.exprSettings.strFilenameInputSparse
-  local taLoadParams = {header=false, separator=","}
-  local f = csv.open(strFilename, taLoadParams)
-
-  local dValueNonsparse = 1
-  local taRecords = {}
-  for fields in f:lines() do
-
-    local teIdx = torch.Tensor(fields)
-    local teCurr = torch.Tensor(teIdx:size(1), 2)
-    teCurr:select(2, 1):copy(teIdx)
-    teCurr:select(2, 2):fill(dValueNonsparse)
-    table.insert(taRecords, teCurr)
-  end
-
-  return taRecords
-end
-
 function CDataLoader:pri_insertLineInfo(taIdx, strLine)
   local taSplit1 = strLine:split(':')
   local nRowId = tonumber(taSplit1[1])
@@ -39,7 +20,7 @@ function CDataLoader:pri_insertLineInfo(taIdx, strLine)
   end
 end
 
-function CDataLoader:loadSparseInputSingleV2(strFilename)
+function CDataLoader:loadSparseInputSingle(strFilename)
   local strFilename = string.format("%s/%s", self.exprSettings.strBaseDir, strFilename)
   local taRes = { nBatchSize = self.exprSettings.nRows }
 
@@ -82,8 +63,7 @@ end
 
 function CDataLoader:pri_sparseToSparseBlock(taSparseInput, nWidth)
 
-  local taRes = { 
-									teRowIdx = nil,
+  local taRes = { teRowIdx = nil,
 									teValue = nil}
 
 	local taBlockRowReverseMap = nil
@@ -106,10 +86,9 @@ function CDataLoader:loadSparseBlockInput()
 
   self.taMetaInfo = self:loadSparseMetaInfo()
 	local taInput = {nBatchSize = self.exprSettings.nRows,
---									 teDefault = torch.Tensor(1, 1, 1):fill(0),
 									 taData = {}}
   for key, taFileInfo in pairs(self.taMetaInfo) do
-    local taSparseInput = self:loadSparseInputSingleV2(taFileInfo.strFilename)
+    local taSparseInput = self:loadSparseInputSingle(taFileInfo.strFilename)
 		local taSparseBlockInput = self:pri_sparseToSparseBlock(taSparseInput, taFileInfo.nWidth)
 
     table.insert(taInput.taData, taSparseBlockInput)
@@ -118,7 +97,6 @@ function CDataLoader:loadSparseBlockInput()
 	return taInput
 
 end
-
 
 function CDataLoader:loadSparseMetaInfo()
   local strFilename = self.exprSettings.strFilenameMetaInfo
@@ -175,4 +153,3 @@ function CDataLoader:saveDescription(strDescription)
 	file:write(strDescription)
 	file:close()
 end
-

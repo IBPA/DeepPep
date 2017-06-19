@@ -31,12 +31,9 @@ oExperiment:buildArch(taSetting)
 
 -- 2) train
 oExperiment:roundTrip()
-
-
 local taTrainParams = trainerPool.getDefaultTrainParams(nil, "RMSprop", 10)
 taTrainParams.taOptimParams.learningRate = 0.01
 oExperiment:train(taTrainParams)
-
 
 -- 3) predict
 local taProtInfo = oExperiment:getConfidenceRange()

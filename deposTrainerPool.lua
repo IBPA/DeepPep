@@ -123,10 +123,8 @@ do
 		local dMinDiffToUpdate = 0.0000001
 
     for i=1, taTrainParam.nMaxIteration do
---			taTrainParam.taOptimParams.learningRate =   --(errPrev < math.huge ) and (errPrev*40) or 0.9
       errCurr = trainerPool.pri_trainSparseInputNet_SingleRound(mNet, taInput, teTarget, taTrainParam)
 
---      --[[
       if isEarlyStop and (errPrev <= errCurr or myUtil.isNan(errCurr))  then
         print("** early stop **")
         return errPrev
