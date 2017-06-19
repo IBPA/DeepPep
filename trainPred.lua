@@ -1,7 +1,7 @@
 torch.manualSeed(1)
-require('../../CExperimentSparseBlockFlex.lua')
-require('../../CDataLoader.lua')
-local dataLoad = dataLoad or require('../../../MyCommon/dataLoad.lua')
+require('./CExperimentSparseBlock.lua')
+require('./CDataLoader.lua')
+local dataLoad = dataLoad or require('../MyCommon/dataLoad.lua')
 
 function getExprSetting(strFilePathSetting)
 	local taSetting = dataLoad.loadTaSetting(strFilePathSetting)
@@ -14,8 +14,8 @@ function getExprSetting(strFilePathSetting)
 	return taSetting
 end
 
-local archFactory = require('../../deposArchFactory.lua')
-local trainerPool = trainerPool or require('../../deposTrainerPool.lua')
+local archFactory = require('./deposArchFactory.lua')
+local trainerPool = trainerPool or require('./deposTrainerPool.lua')
 
 -- 1) initialize
 print("=== trainPred settings: ===")
@@ -26,15 +26,15 @@ print(taSetting)
 local fuArchBuilder = archFactory.getArchBuilder(taSetting.nArchId)
 
 local oDataLoader = CDataLoader.new(taSetting)
-oExperiment = CExperimentSparseBlockFlex.new(oDataLoader, fuArchBuilder)
+oExperiment = CExperimentSparseBlock.new(oDataLoader, fuArchBuilder)
 oExperiment:buildArch(taSetting)
 
 -- 2) train
 oExperiment:roundTrip()
 
 
-local taTrainParams = trainerPool.getDefaultTrainParams(nil, "RMSprop", 100)
-taTrainParams.taOptimParams.learningRate = 0.001
+local taTrainParams = trainerPool.getDefaultTrainParams(nil, "RMSprop", 10)
+taTrainParams.taOptimParams.learningRate = 0.01
 oExperiment:train(taTrainParams)
 
 

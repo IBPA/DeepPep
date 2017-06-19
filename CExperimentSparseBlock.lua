@@ -8,77 +8,14 @@ local deposUtil = deposUtil or require('./deposUtil.lua')
 CExperimentSparseBlock = torch.class("CExperimentSparseBlock")
 
 
-function CExperimentSparseBlock:__init(oDataLoader)
+function CExperimentSparseBlock:__init(oDataLoader, fuArchBuilder)
   self.oDataLoader = oDataLoader
+  self.fuArchBuilder = fuArchBuilder
 end
 
-function CExperimentSparseBlock:buildArch_Linear(dDropoutRate)
+function CExperimentSparseBlock:buildArch(taArchParams)
   self.taMetaInfo = self.oDataLoader:loadSparseMetaInfo()
-  dDropoutRate = dDropoutRate or 0.6
-
-	self.mFirst = nn.Sequential()
-		self.mFirst:add(nn.SparseBlockFlattenDim3())
-		self.mFirst:add(nn.SparseBlockLinear(1, true))
---		self.mFirst:add(nn.SparseBlockDropout(dDropoutRate))
-
-	self.mRest = nn.Sequential()
-		self.mRest:add(nn.SparseBlockToDenseLinear(1, true))
---		self.mRest:add(nn.Sigmoid())
-
-	self.mNet = nn.Sequential()
-		self.mNet:add(self.mFirst)
-		self.mNet:add(self.mRest)
-
-end
-
-function CExperimentSparseBlock:buildArch(dDropoutRate, nPoolWindowSize)
-  self.taMetaInfo = self.oDataLoader:loadSparseMetaInfo()
-  dDropoutRate = dDropoutRate or 0.2
-	nPoolWindowSize = nPoolWindowSize or 4
-
-	self.mNet = nn.Sequential()
-
-	self.mFirst = nn.Sequential()
-		self.mFirst:add(nn.SparseBlockTemporalConvolution(1, 5, 8))
-		self.mFirst:add(nn.SparseBlockReLU())
-		self.mFirst:add(nn.SparseBlockTemporalMaxPooling(nPoolWindowSize))
---		self.mFirst:add(nn.SparseBlockDropout(dDropoutRate))
-
-		self.mFirst:add(nn.SparseBlockTemporalConvolution(5, 10, 8))
-		self.mFirst:add(nn.SparseBlockReLU())
-		self.mFirst:add(nn.SparseBlockTemporalMaxPooling(nPoolWindowSize))
---		self.mFirst:add(nn.SparseBlockDropout(dDropoutRate))
-
-		self.mFirst:add(nn.SparseBlockFlattenDim3())
-		self.mFirst:add(nn.SparseBlockLinear(1, false))
-
-	self.mRest = nn.SparseBlockToDenseLinear(1, false)
-
-	self.mNet:add(self.mFirst)
-	self.mNet:add(self.mRest)
-end
-
--- ******************************************************************************************************
--- ********* Method to allow transfer of parameters between CExperiment and CExperimentSparseBlock ******
--- ******************************************************************************************************
-
-function CExperimentSparseBlock:setModelParameters(nLayerId, nColumnId, teWeight, teBias)
-	if nLayerId == 1 then
-		local mCurrent = self.mNet.modules[1].modules[2]
-		assert(mCurrent.__typename == "nn.SparseBlockLinear", "only works for nn.SparseBlockLinear!")
-
-		mCurrent:pri_getSubWeight(nColumnId):copy(teWeight)
-		mCurrent:pri_getBias(nColumnId):copy(teBias)
-
-	elseif nLayerId == 2 then
-		local mCurrent = self.mNet.modules[2].modules[1]
-		assert(mCurrent.__typename == "nn.SparseBlockToDenseLinear", "only support nn.SparseBlockToDenseLinear here!")
-
-		mCurrent.weight:copy(teWeight)
-		mCurrent.bias:copy(teBias)
-	else
-		error("not here!")
-	end
+	self.fuArchBuilder(self, taArchParams)
 end
 
 function CExperimentSparseBlock:roundTrip()
@@ -99,33 +36,12 @@ function CExperimentSparseBlock:roundTrip()
   print("backward elapsed time(s):" .. sys.toc())
 end
 
-function CExperimentSparseBlock:test()
-  -- 1) load input
-	local taInput = self.oDataLoader:loadSparseBlockInput(self.taMetaInfo)
+function CExperimentSparseBlock:train(taTrainParam, nIteration, strOptimMethod, isEarlyStop, dStopError)
+  nIteration = nIteration or 20
+  strOptimMethod = strOptimMethod or "SGD"
+  isEarlyStop = isEarlyStop or false
+  dStopError = dStopError or 0.0001
 
-  -- 2) Load the Target
-  local teTarget = self.oDataLoader:loadTarget()
-
-
-	-- 3) forward
-	local teOutput = self.mNet:forward(taInput)
-
-	print(teOutput)
-
-	--[[
-	local taParametersA, taParametersB, taParametersC, taParametersD = self.mNet:getParameters()
-	print(taParametersA:size())
-	print(taParametersB:size())
-	--]]
-
-	
-
---	print(teOutput)
-
-end
-
-function CExperimentSparseBlock:train(nIteration, strOptimMethod, isEarlyStop, dStopError, taTrainParam)
-  local nIteration = nIteration or 20
 
   -- 1) load input
 	local taInput = self.oDataLoader:loadSparseBlockInput(self.taMetaInfo)
@@ -152,36 +68,6 @@ function CExperimentSparseBlock.loadFromFile(strFilePath)
 
   return oExperiment
 end
-
-
-function CExperimentSparseBlock:getConfidenceOne(teOutputAll, taOutputFirst, taFirstProt, taInput)
-  -- 1) save the prot column we are about the replace
-	local teFirstProtValueOrig = taFirstProt.teValue:clone()
-	
-	-- 2) replace the protein column with teDefault/zero
-	if taFirstProt.teDefault ~= nil then
-		local teTmpView = taFirstProt.teDefault:view(1, taFirstProt.teDefault:size(1))
-		taFirstProt.teValue:copy(teTmpView:expand(taFirstProt.teValue:size()))
-	else
-		taFirstProt.teValue:zero()
-	end
-
-  -- 3) calculate the final prediction
-	local teOutputAllNew = self.mRest:forward(taOutputFirst):clone()
-
-  -- 4) calculate the difference
-  local teOutputResidual = torch.add(torch.mul(teOutputAllNew, -1),
-                                     teOutputAll):abs():squeeze()
-	
-
-  -- 5) replace the orig column
-	taFirstProt.teValue:copy(teFirstProtValueOrig)
-
-  -- 6) calculate prot_pepdide confidences
-	local dSum = self:getNormalizedResidualSum(taInput, teOutputResidual)
-	return dSum /teOutputAll:size(1)
-end
-
 
 function CExperimentSparseBlock:getConfidenceOneVFast(teOutputAll, taOutputFirst, taFirstProt, taInput, nProtId)
   -- 1) save the prot column we are about the replace
