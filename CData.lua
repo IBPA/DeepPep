@@ -41,63 +41,63 @@ function CData:pri_loadSparseInputSingle(strFilename)
 end
 
 function pri_getBlockRowIdx(taSparseInput)
-		-- capture the unique ids
-		local taUnique = {}
-		for i=1, taSparseInput.teOnes:size(1) do
-			taUnique[taSparseInput.teOnes[i][1]] = true
-		end
+    -- capture the unique ids
+    local taUnique = {}
+    for i=1, taSparseInput.teOnes:size(1) do
+      taUnique[taSparseInput.teOnes[i][1]] = true
+    end
 
-		-- create block ids
-		local taBlockRowIdx = {}
-		for key, value in pairs(taUnique) do
-			table.insert(taBlockRowIdx, key)
-		end
-		local teBlockRowIdx = torch.LongTensor(taBlockRowIdx)
+    -- create block ids
+    local taBlockRowIdx = {}
+    for key, value in pairs(taUnique) do
+      table.insert(taBlockRowIdx, key)
+    end
+    local teBlockRowIdx = torch.LongTensor(taBlockRowIdx)
 
-		-- create reverse map (input to block)
-		local taBlockRowReverseMap = {}
-		for i=1, teBlockRowIdx:size(1) do
-				taBlockRowReverseMap[teBlockRowIdx[i]] = i
-		end
+    -- create reverse map (input to block)
+    local taBlockRowReverseMap = {}
+    for i=1, teBlockRowIdx:size(1) do
+        taBlockRowReverseMap[teBlockRowIdx[i]] = i
+    end
 
-		teBlockRowIdx:resize(teBlockRowIdx:size(1), 1) -- resize to add second dimension (necessary in SparseBlockToDenseLinear)
-		return teBlockRowIdx, taBlockRowReverseMap
+    teBlockRowIdx:resize(teBlockRowIdx:size(1), 1) -- resize to add second dimension (necessary in SparseBlockToDenseLinear)
+    return teBlockRowIdx, taBlockRowReverseMap
 end
 
 function CData:pri_sparseToSparseBlock(taSparseInput, nWidth)
 
   local taRes = { teRowIdx = nil,
-									teValue = nil}
+                  teValue = nil}
 
-	local taBlockRowReverseMap = nil
-	taRes.teRowIdx, taBlockRowReverseMap = pri_getBlockRowIdx(taSparseInput)
-	local nBlocks = taRes.teRowIdx:size(1)
-	taRes.teValue =  torch.Tensor(nBlocks, nWidth, 1):fill(0)
+  local taBlockRowReverseMap = nil
+  taRes.teRowIdx, taBlockRowReverseMap = pri_getBlockRowIdx(taSparseInput)
+  local nBlocks = taRes.teRowIdx:size(1)
+  taRes.teValue =  torch.Tensor(nBlocks, nWidth, 1):fill(0)
 
-	local teOnes = taSparseInput.teOnes
-	for i=1, teOnes:size(1) do
-			local nRowId = taBlockRowReverseMap[teOnes[i][1]]
-			local nStartId = teOnes[i][2]
-			local nLength = teOnes[i][3]
-			taRes.teValue[nRowId]:narrow(1, nStartId, nLength):fill(1)
-	end
+  local teOnes = taSparseInput.teOnes
+  for i=1, teOnes:size(1) do
+      local nRowId = taBlockRowReverseMap[teOnes[i][1]]
+      local nStartId = teOnes[i][2]
+      local nLength = teOnes[i][3]
+      taRes.teValue[nRowId]:narrow(1, nStartId, nLength):fill(1)
+  end
 
-	return taRes
+  return taRes
 end
 
 function CData:loadSparseBlockInput()
 
   self.taMetaInfo = self:loadSparseMetaInfo()
-	local taInput = {nBatchSize = self.exprSettings.nRows,
-									 taData = {}}
+  local taInput = {nBatchSize = self.exprSettings.nRows,
+                   taData = {}}
   for key, taFileInfo in pairs(self.taMetaInfo) do
     local taSparseInput = self:pri_loadSparseInputSingle(taFileInfo.strFilename)
-		local taSparseBlockInput = self:pri_sparseToSparseBlock(taSparseInput, taFileInfo.nWidth)
+    local taSparseBlockInput = self:pri_sparseToSparseBlock(taSparseInput, taFileInfo.nWidth)
 
     table.insert(taInput.taData, taSparseBlockInput)
   end
 
-	return taInput
+  return taInput
 
 end
 
@@ -144,15 +144,15 @@ end
 function CData:saveModelParams(teParams)
   local file = io.open(self.exprSettings.strFilenameExprParams , "w")
 
-	for i=1, teParams:size(1) do
-		file:write(string.format("%f\n", teParams[i]))
-	end
+  for i=1, teParams:size(1) do
+    file:write(string.format("%f\n", teParams[i]))
+  end
 
-	file:close()
+  file:close()
 end
 
 function CData:saveDescription(strDescription)
   local file = io.open(self.exprSettings.strFilenameExprDescription, "w")
-	file:write(strDescription)
-	file:close()
+  file:write(strDescription)
+  file:close()
 end

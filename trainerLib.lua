@@ -65,7 +65,7 @@ do
     parameters, gradParameters = mNet:getParameters()
     local criterion = taTrainParam.criterion
     local overallErr = 0
-		local scale = taTrainParam.taOptimParams.learningRate or 1
+    local scale = taTrainParam.taOptimParams.learningRate or 1
 
       local fuEval = function(x)
         collectgarbage()
@@ -119,16 +119,16 @@ do
 
   -- Description: train nn
   function trainerLib.trainSparseInputNet(mNet, taInput, teTarget, nMaxIteration, strOptimMethod, isEarlyStop, dStopError, taTrainParam)
-		strOptimMethod = strOptimMethod or "SGD"
+    strOptimMethod = strOptimMethod or "SGD"
     local criterion = nn.MSECriterion()
     local taTrainParam = taTrainParam or trainerLib.getDefaultTrainParams(teTarget:size(1), strOptimMethod, nMaxIteration )
 
     local errPrev = math.huge
     local errCurr = math.huge
-		local errBest = math.huge
-		teParameters, teGradParameters = mNet:getParameters()
-		local teParametersBest = torch.Tensor(teParameters:size())
-		local dMinDiffToUpdate = 0.0000001
+    local errBest = math.huge
+    teParameters, teGradParameters = mNet:getParameters()
+    local teParametersBest = torch.Tensor(teParameters:size())
+    local dMinDiffToUpdate = 0.0000001
 
     for i=1, taTrainParam.nMaxIteration do
       errCurr = trainerLib.pri_trainSparseInputNet_SingleRound(mNet, taInput, teTarget, taTrainParam)
@@ -136,14 +136,14 @@ do
       if isEarlyStop and (errPrev <= errCurr or myUtil.isNan(errCurr))  then
         print("** early stop **")
         return errPrev
-			end
+      end
 
-			if errCurr < (errBest - dMinDiffToUpdate) then -- updating only if minimum dMinDiffToUpdate improvement
-				print("updateing, error: " .. errCurr)
-				teParameters, teGradParameters = mNet:getParameters()
-				teParametersBest:copy(teParameters)
-				errBest = errCurr
-			end
+      if errCurr < (errBest - dMinDiffToUpdate) then -- updating only if minimum dMinDiffToUpdate improvement
+        print("updateing, error: " .. errCurr)
+        teParameters, teGradParameters = mNet:getParameters()
+        teParametersBest:copy(teParameters)
+        errBest = errCurr
+      end
 
       if errCurr ~= nil and errCurr < math.huge then
         local message = errCurr < errPrev and "<" or "!>"
@@ -151,18 +151,18 @@ do
         myUtil.log(errCurr, false, taTrainParam.isLog)
         errPrev = errCurr
       else
-				print(string.format("!!!! %s !!!!", tostring(errCurr)))
+        print(string.format("!!!! %s !!!!", tostring(errCurr)))
         error("invalid value for errCurr!")
       end
 
-			if dStopError ~= nil and errCurr < dStopError then
-				print(string.format("Reached error bellow: %f, therefore enough!", dStopError ))
-				break
-			end
+      if dStopError ~= nil and errCurr < dStopError then
+        print(string.format("Reached error bellow: %f, therefore enough!", dStopError ))
+        break
+      end
     end
 
-		teParameters, teGradParameters = mNet:getParameters()
-		teParameters:copy(teParametersBest)
+    teParameters, teGradParameters = mNet:getParameters()
+    teParameters:copy(teParametersBest)
 
     return errBest
   end

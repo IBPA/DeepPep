@@ -15,7 +15,7 @@ function getExprSetting(strFilePathSetting)
   taSetting.nWindowSizeConv1 = tonumber(taSetting.nWindowSizeConv1)
   taSetting.nWindowSizeMaxPool1 = tonumber(taSetting.nWindowSizeMaxPool1)
 
-	return taSetting
+  return taSetting
 end
 
 local archFactory = require('./archFactory.lua')
