@@ -1,12 +1,15 @@
+--[[ Description:
+      Enables file operations including loading data in the 
+        SparseBlock format to be used for SpaseBlock architectures.]]
+
 local csv = csv or require("csv")
+CData = torch.class("CData")
 
-CDataLoader = torch.class("CDataLoader")
-
-function CDataLoader:__init(exprSettings)
+function CData:__init(exprSettings)
   self.exprSettings = exprSettings
 end
 
-function CDataLoader:pri_insertLineInfo(taIdx, strLine)
+function CData:pri_insertLineInfo(taIdx, strLine)
   local taSplit1 = strLine:split(':')
   local nRowId = tonumber(taSplit1[1])
 
@@ -20,7 +23,7 @@ function CDataLoader:pri_insertLineInfo(taIdx, strLine)
   end
 end
 
-function CDataLoader:loadSparseInputSingle(strFilename)
+function CData:pri_loadSparseInputSingle(strFilename)
   local strFilename = string.format("%s/%s", self.exprSettings.strBaseDir, strFilename)
   local taRes = { nBatchSize = self.exprSettings.nRows }
 
@@ -61,7 +64,7 @@ function pri_getBlockRowIdx(taSparseInput)
 		return teBlockRowIdx, taBlockRowReverseMap
 end
 
-function CDataLoader:pri_sparseToSparseBlock(taSparseInput, nWidth)
+function CData:pri_sparseToSparseBlock(taSparseInput, nWidth)
 
   local taRes = { teRowIdx = nil,
 									teValue = nil}
@@ -82,13 +85,13 @@ function CDataLoader:pri_sparseToSparseBlock(taSparseInput, nWidth)
 	return taRes
 end
 
-function CDataLoader:loadSparseBlockInput()
+function CData:loadSparseBlockInput()
 
   self.taMetaInfo = self:loadSparseMetaInfo()
 	local taInput = {nBatchSize = self.exprSettings.nRows,
 									 taData = {}}
   for key, taFileInfo in pairs(self.taMetaInfo) do
-    local taSparseInput = self:loadSparseInputSingle(taFileInfo.strFilename)
+    local taSparseInput = self:pri_loadSparseInputSingle(taFileInfo.strFilename)
 		local taSparseBlockInput = self:pri_sparseToSparseBlock(taSparseInput, taFileInfo.nWidth)
 
     table.insert(taInput.taData, taSparseBlockInput)
@@ -98,7 +101,7 @@ function CDataLoader:loadSparseBlockInput()
 
 end
 
-function CDataLoader:loadSparseMetaInfo()
+function CData:loadSparseMetaInfo()
   local strFilename = self.exprSettings.strFilenameMetaInfo
   local taLoadParams = {header=false, separator=","}
   local f = csv.open(strFilename, taLoadParams)
@@ -112,7 +115,7 @@ function CDataLoader:loadSparseMetaInfo()
   return taMetaInfo
 end
 
-function CDataLoader:loadTarget()
+function CData:loadTarget()
   local strFilename = self.exprSettings.strFilenameTarget
   local taLoadParams = {header=false, separator=","}
   local f = csv.open(strFilename, taLoadParams)
@@ -129,7 +132,7 @@ function CDataLoader:loadTarget()
   return teResult
 end
 
-function CDataLoader:saveProtInfo(taProtInfo)
+function CData:saveProtInfo(taProtInfo)
   local file = io.open(self.exprSettings.strFilenameProtInfo, "w")
   for key, value in pairs(taProtInfo) do
     file:write(string.format("%s,%.12f\n", value[1], value[2]))
@@ -138,7 +141,7 @@ function CDataLoader:saveProtInfo(taProtInfo)
   file:close()
 end
 
-function CDataLoader:saveModelParams(teParams)
+function CData:saveModelParams(teParams)
   local file = io.open(self.exprSettings.strFilenameExprParams , "w")
 
 	for i=1, teParams:size(1) do
@@ -148,7 +151,7 @@ function CDataLoader:saveModelParams(teParams)
 	file:close()
 end
 
-function CDataLoader:saveDescription(strDescription)
+function CData:saveDescription(strDescription)
   local file = io.open(self.exprSettings.strFilenameExprDescription, "w")
 	file:write(strDescription)
 	file:close()

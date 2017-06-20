@@ -1,7 +1,9 @@
+""" To predict protein identification probabilities given peptide identification probabilities. """
+
 import sys
 import os
 import runLib
-# General setting
+
 dicTrainPredArgs = {
     'nArchId': 24,
     'nOutputPerColumn': 5,

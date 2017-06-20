@@ -1,7 +1,9 @@
+--[[ Description:
+       Each function in this file generates an nn architecture (not all of these are used in DeepPep)]]
 do
-	local deposArchFactory = {}
+	local archFactory = {}
 
-	deposArchFactory.taBuilders = {
+	archFactory.taBuilders = {
 		function(self) -- 1
 			self.strArchDescription = "MaxPooling(nPoolingWindow=4), Linear(nNodes=2)"
 
@@ -493,9 +495,9 @@ do
 
 	}
 
-	function deposArchFactory.getArchBuilder(nArchId)
-		return deposArchFactory.taBuilders[nArchId]
+	function archFactory.getArchBuilder(nArchId)
+		return archFactory.taBuilders[nArchId]
 	end
 
-	return deposArchFactory
+	return archFactory
 end
