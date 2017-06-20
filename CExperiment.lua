@@ -1,200 +1,122 @@
+--[[ Description:
+      Coordinates details related to training and prediction of DeepPep.]]
+
 require 'nn'
 require 'sys'
-require './SparseLinearX.lua'
-local trainerPool = require('./deposTrainerPool.lua')
+require 'sparsenn'
 
+local trainerLib = require('./trainerLib.lua')
 CExperiment = torch.class("CExperiment")
 
-function CExperiment:__init(oDataLoader)
-  self.oDataLoader = oDataLoader
+-- Input(oData): data object (CData).
+-- Input(fuArchBuilder): a function that generates the nn architecture.
+function CExperiment:__init(oData, fuArchBuilder)
+  self.oData = oData
+  self.fuArchBuilder = fuArchBuilder
 end
 
-function CExperiment:buildArch(dDropoutRate)
-  self.taMetaInfo = self.oDataLoader:loadSparseMetaInfo()
-  local dDropoutRate = dDropoutRate or 0.7
-
-  -- 1) Build the layer0
-  local nUnitWidthLayer0 = 1
-  local mLayer0 = nn.ParallelTable()
-  local nParallels = 0
-  for key, taFileInfo in pairs(self.taMetaInfo) do
-    local mSeq = nn.Sequential()
-      mSeq:add(nn.SparseLinearX(taFileInfo.nWidth, nUnitWidthLayer0 ))
---      mSeq:add(nn.Dropout(dDropoutRate))
-    
-    mLayer0:add(mSeq)
-    nParallels = nParallels + 1
-  end
-
-  -- 2) Build the rest of the FNN:
-  self.mNet = nn.Sequential()
-  self.mNet:add(mLayer0)
-  self.mNet:add(nn.JoinTable(2))
-
-  local mSeq = nn.Sequential()
-    mSeq:add(nn.Linear(nParallels*nUnitWidthLayer0, 1))
---    mSeq:add(nn.Sigmoid())
---    mSeq:add(nn.Dropout(0.70))
-  self.mNet:add(mSeq)
---  self.mNet:add(nn.Linear(nParallels, 1))
+function CExperiment:buildArch(taArchParams)
+  self.taMetaInfo = self.oData:loadSparseMetaInfo()
+  self.fuArchBuilder(self, taArchParams)
 end
 
--- ******************************************************************************************************
--- ********* Method to allow transfer of parameters between CExperiment and CExperimentSparseBlock ******
--- ******************************************************************************************************
-function CExperiment:getNColumns()
-	return table.getn(self.taMetaInfo)
-end
-
-function CExperiment:getModelParameters(nLayerId, nColumnId)
-	if nLayerId == 1 then
-		local mFirst = self.mNet.modules[1]
-		local mCurrent = mFirst.modules[nColumnId].modules[1]
-		return mCurrent.weight, mCurrent.bias
-	elseif nLayerId == 2 then
-		local mCurrent = self.mNet.modules[3].modules[1]
-		return mCurrent.weight, mCurrent.bias
-	else	
-		assert(false, "oops")
-	end
-end
-
-function CExperiment:test()
+-- Description: After loading the data, performs a single forward and backward pass on nn.
+function CExperiment:roundTrip()
   -- 1) load input
-  local taInput = {}
-  for key, taFileInfo in pairs(self.taMetaInfo) do
-    local taOneInput = self.oDataLoader:loadSparseInputSingleV2(taFileInfo.strFilename)
-    table.insert(taInput, taOneInput)
-  end
+  local taInput = self.oData:loadSparseBlockInput(self.taMetaInfo)
 
   -- 2) Load the Target
-  local teTarget = self.oDataLoader:loadTarget()
+  local teTarget = self.oData:loadTarget()
 
+  -- ToDo: now doing simple single forward, backward for until fully implemented
+  sys.tic()
+  local teOutput = self.mNet:forward(taInput)
+  print("forward elapsed time(s):" .. sys.toc())
 
-	-- 3) forward
-	local teOutput = self.mNet:forward(taInput)
-
-	print(teOutput)
-
-
-
-
---	print(teOutput)
-
+  sys.tic()
+  local taGradInput = self.mNet:backward(taInput, teOutput, 0)
+  print("backward elapsed time(s):" .. sys.toc())
 end
-
-
-function CExperiment:train(nIteration, isKeepData)
-  local nIteration = nIteration or 20
+ 
+function CExperiment:train(taTrainParam, nIteration, strOptimMethod, isEarlyStop, dStopError)
+  nIteration = nIteration or 20
+  strOptimMethod = strOptimMethod or "SGD"
+  isEarlyStop = isEarlyStop or false
+  dStopError = dStopError or 0.0001
 
   -- 1) load input
-  local taInput = {}
-  for key, taFileInfo in pairs(self.taMetaInfo) do
-    local taOneInput = self.oDataLoader:loadSparseInputSingleV2(taFileInfo.strFilename)
-    table.insert(taInput, taOneInput)
-  end
+  local taInput = self.oData:loadSparseBlockInput(self.taMetaInfo)
 
   -- 2) Load the Target
-  local teTarget = self.oDataLoader:loadTarget()
+  local teTarget = self.oData:loadTarget()
 
   -- 3) Train
-	self.mNet:training()
+  self.mNet:training()
   sys.tic()
-  local dTrainErr = trainerPool.trainSparseInputNet(self.mNet, taInput, teTarget, nIteration, "CG", true)
+  local dTrainErr = trainerLib.trainSparseInputNet(self.mNet, taInput, teTarget, nIteration, strOptimMethod, isEarlyStop, dStopError, taTrainParam)
   print("\ntraining error:" .. dTrainErr) 
   print("training elapsed time(s):" .. sys.toc())
-
-  -- 4) isKeepData
-  if isKeepData then
-    self.taInput = taInput
-  end
-
 end
 
+-- Input(strFilePath): filepath to save this CExperiment object.
 function CExperiment:save(strFilePath)
   torch.save(strFilePath, self)
 end
 
+-- Input(strFilePath): filepath to load a CExperiment from.
 function CExperiment.loadFromFile(strFilePath)
   local oExperiment = torch.load(strFilePath)
 
   return oExperiment
 end
 
-function CExperiment:pri_getLayers() -- ToDo: this would change for other architectures
-  local mFirst = nn.Sequential()
-  mFirst:add(self.mNet.modules[1])
-  mFirst:add(self.mNet.modules[2])
-
-  local mRest = self.mNet.modules[3]
-
-  return {mFirst = mFirst, mRest = mRest}
+-- Input(teOutputAll): precalucated output of nn for all proteins.
+-- Input(taOutputFirst): precalculated output of first part of nn (before joining proteins).
+-- Input(taInput): taInput for the given protein
+-- Input(nProtId): proein id
+-- Return: calculated confidence from deepPep for the given protein.
+function CExperiment:pri_getConfidenceOneVFast(teOutputAll, taOutputFirst, taInput, nProtId)
+  -- 1) calculate the columns contribution in in final prediction
+  self.mRest:pub_setColIds(nProtId) -- ensure calculates are done only for the given protein.
+  local teOutputResidual = self.mRest:forward(taOutputFirst):clone():abs():squeeze()
+  
+  -- 2) calculate prot_pepdide confidences
+  local dSum = self:pri_getNormalizedResidualSum(taInput, teOutputResidual)
+  return dSum /teOutputAll:size(1)
 end
 
-function CExperiment:pri_getEmptyInput(nRows)
-  return { nBatchSize = nRows, teOnes = torch.LongTensor() }
-end
-
-function CExperiment:getConfidenceOne(teOutputAll, teOutputFirst, taMNetLayers, nProtId, taProtData)
-  -- 1) save the nProtId column we are about the replace
-  local teProtOrig = teOutputFirst:narrow(2, nProtId, 1):clone()
-
-  -- 2) replace the protein column with predicted value for empty info  for nProtId
-  local mProt = taMNetLayers.mFirst.modules[1].modules[nProtId]
-  local teEmpty = self:pri_getEmptyInput(teOutputFirst:size(1))
-  local teProt = mProt:forward(teEmpty):clone()
-  teOutputFirst:narrow(2, nProtId, 1):copy(teProt)
-
-  -- 3) calculate the final prediction
-  local teOutputAllNew = taMNetLayers.mRest:forward(teOutputFirst):clone()
-
-  -- 4) calculate the difference
-  local teOutputResidual = torch.add(torch.mul(teOutputAllNew, -1),
-                                     teOutputAll):abs():squeeze()
-                                      
-  -- 5) replace the orig column
-  teOutputFirst:narrow(2, nProtId, 1):copy(teProtOrig)
-
-  -- 6) calculate prot_pepdide confidences
-
-  -- 6.1) calculate the counts
-  local taProtPepCount = {}
-  local nRows = taProtData.teOnes:size(1)
-  for i=1, nRows do
-    local nIdx = taProtData.teOnes[i][1]
-    local nCount = taProtData.teOnes[i][3]
-
-    local nExistingCount = taProtPepCount[nIdx] or 0
-    taProtPepCount[nIdx] = nExistingCount + nCount
-  end
-
-  -- 6.2) calculate the confidences
+-- Input(taInput): protein input
+-- Input(teOutputResidual): protein's contribution to predicted probabilities
+-- Return: normalized residual sum of preotein's contribution to predicted probabilities.
+function CExperiment:pri_getNormalizedResidualSum(taInput, teOutputResidual)
   local dSum = 0
-  for key, value in pairs(taProtPepCount) do
-    local dConfCurr = teOutputResidual[key]/value
-    dSum = dSum + dConfCurr
+  local nMatchingPeptides = taInput.teRowIdx:size(1)
+  for i=1, nMatchingPeptides do
+    local n_ji = taInput.teValue[i]:sum()
+    local nIdx = taInput.teRowIdx[i]:squeeze()
+    local c_ij = teOutputResidual[nIdx]/n_ji
+    dSum = dSum + c_ij
   end
 
-  return dSum/taProtData.nBatchSize
+  return dSum
 end
 
-function CExperiment:getConfidenceRange(nStart, nEnd)
+-- Return: table containing calculated confidence levels for each protein.
+function CExperiment:getConfidenceAll()
   sys.tic()
+  self.mNet:evaluate()
+  
+  local nEnd = #self.taMetaInfo
+  local taInput = self.oData:loadSparseBlockInput(self.taMetaInfo)
+  
+  local teOutputAll = self.mNet:forward(taInput):clone()
 
-  local nStart = nStart or 1
-  local nEnd = nEnd or #self.taMetaInfo
-
---	self.mNet:evaluate()
-  local teOutputAll = self.mNet:forward(self.taInput):clone()
-  local taMNetLayers = self:pri_getLayers()
-  local teOutputFirst = taMNetLayers.mFirst:forward(self.taInput):clone()
+  local taOutputFirst = self.mFirst:forward(taInput) 
 
   local taProtInfo = {}
   for i=1, nEnd do
-    local taFileInfo = self.taMetaInfo[i]
-    local dConf = self:getConfidenceOne(teOutputAll, teOutputFirst, taMNetLayers, i, self.taInput[i])
-
-    local strProtFilename = taFileInfo.strFilename
+    local dConf = self:pri_getConfidenceOneVFast(teOutputAll, taOutputFirst, taInput.taData[i], i)
+    local strProtFilename = self.taMetaInfo[i].strFilename
     local strProtName = strProtFilename:sub(1, strProtFilename:len() -4)  -- remove the ".txt" from the end
     local taRow = { strProtName, dConf }
     table.insert(taProtInfo, taRow)
@@ -204,7 +126,13 @@ function CExperiment:getConfidenceRange(nStart, nEnd)
   return taProtInfo
 end
 
+-- Input(taProtInfo): table containing protein names and their predicted confidences.
 function CExperiment:saveResult(taProtInfo)
-  self.oDataLoader:saveProtInfo(taProtInfo)
+  self.oData:saveProtInfo(taProtInfo)
+  self.oData:saveModelParams(self.mNet:getParameters())
+
+  if self.strArchDescription ~= nil then
+    self.oData:saveDescription(self.strArchDescription)
+  end
 end
 

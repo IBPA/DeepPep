@@ -1,3 +1,5 @@
+""" Functions used for data preparation step of DeepPep. """
+
 from Bio import SeqIO
 import os
 import csv
@@ -6,7 +8,6 @@ import re
 from multiprocessing.dummy import Pool as ThreadPool
 
 # Description: break the fasta file into multiple proteins, only save the ones provided in protsDic
-# Note: previous version (which some callers may be using), took nameID option to only save part of the name (separated by "|").
 def breakFasta(strFastaFilename, strProtRefsDir, protsDic = None):
 
   # create dir if missing
@@ -22,7 +23,6 @@ def breakFasta(strFastaFilename, strProtRefsDir, protsDic = None):
                 bfProt.write(str(currRecord.seq))
 
             counter += 1
-
     print('read and generated {:d} files'.format(counter))
 
 def loadPepProbsFromCsv(strFilePath, delimiter, pepId, probId):
@@ -35,20 +35,12 @@ def loadPepProbsFromCsv(strFilePath, delimiter, pepId, probId):
 
     return listPeptideProb
 
-def loadUniqProtsDicFromCsv(strFilePath, delimiter, protColId):
-    protsDic = {}
-    with open(strFilePath, "r") as bfCsv:
-        csvReader = csv.reader(bfCsv, delimiter = delimiter, skipinitialspace=True)
-        for row in csvReader:
-            protsDic[row[protColId]] = True
-
-    return protsDic
-
-# Description: Load protein, peptide, and probablity info into single dictionary
-# Return: 
-#   1) Dictionary of proteins pointed to the corresponding peptides and probabilities
-#   2) Dictionary of peptides with associated probababilities
 def loadProtPeptideDic(strFilePath, delimiter = "\t", protColId = 1, pepColId = 0, probColId = 2):
+    """ Description: Load protein, peptide, and probablity info into single dictionary
+    Return: 
+      1) Dictionary of proteins pointed to the corresponding peptides and probabilities
+      2) Dictionary of peptides with associated probababilities """
+
     protDic = {}
     pepDic = {}
 
@@ -67,7 +59,6 @@ def loadProtPeptideDic(strFilePath, delimiter = "\t", protColId = 1, pepColId = 
             else:
                 pepInfo[2] = max(dProb, pepInfo[2]) # Note: allways using 'max', if mean need a little more work
             
-            
             # update protInfo
             protInfo = protDic.get(strProt)
             if protInfo is None:
@@ -77,36 +68,17 @@ def loadProtPeptideDic(strFilePath, delimiter = "\t", protColId = 1, pepColId = 
             protInfo[strPep] = pepInfo
         
         return protDic, pepDic
-            
-
-def consolidatePepProbs(listPeptideProb):
-    dicAll = {}
-
-    # a) load all into dic
-    for row in listPeptideProb:
-      strPeptide = row[0]
-      dProb = row[1]
-
-      if strPeptide not in dicAll:
-          dicAll[strPeptide] = list()
-
-      dicAll[strPeptide].append(float(dProb))
-
-
-    # b) consolidate
-    listPeptideProbRes = []
-    for strPeptide, listProb in dicAll.items():
-      #        listPeptideProbRes.append([strPeptide, stat.median(listProb)]) #ToDo: uncomment after removing next line if you want median
-        listPeptideProbRes.append([strPeptide, max(listProb)])
-
-    listPeptideProbRes.sort()
-    return listPeptideProbRes
 
 def getProtRefFileNames(strBaseProtRefsPath):
     listProtFileName = os.listdir(strBaseProtRefsPath)
     return listProtFileName
 
-def fuFindOnes(strProtSeq, strPepSeq):
+def searchOnePepInOneProt(strProtSeq, strPepSeq):
+    """ Finds the  occurances of strPepSeq in strProtSeq.
+    Returns:
+        listMatches: list containing pairs of begin,end for matching locations.
+    """
+
     listMatches = []
     for match in re.finditer(strPepSeq, strProtSeq):
         start, end = match.span()
@@ -114,7 +86,12 @@ def fuFindOnes(strProtSeq, strPepSeq):
     
     return listMatches
 
-def fuFindPeptideMatch(strBaseProtRefsPath, strProtFileName, listPeptideProb):
+def searchPepsInOneProt(strBaseProtRefsPath, strProtFileName, listPeptideProb):
+    """ For each protein find the list of matching peptides and their locations.
+    Returns:
+      listOnes: a list with matching peptide locations.
+    """
+
     strProtFileName = strBaseProtRefsPath + '/' + strProtFileName
 
     listOnes = []
@@ -125,14 +102,14 @@ def fuFindPeptideMatch(strBaseProtRefsPath, strProtFileName, listPeptideProb):
         for item in listPeptideProb:
             i = item[0]
             strPepSeq = item[1]
-            listPeptideOnes = fuFindOnes(strProtSeq, strPepSeq)
+            listPeptideOnes = searchOnePepInOneProt(strProtSeq, strPepSeq)
 
             if listPeptideOnes and  len(listPeptideOnes) > 0:
                 listOnes.append([i, listPeptideOnes])
 
     return listOnes
 
-def fuSaveProtPepOnes(strDir, strProtFileName, listProtPepOnes):
+def saveProtMatches(strDir, strProtFileName, listProtPepOnes):
     strFilePath = strDir + '/' + strProtFileName
 
     with open(strFilePath, 'w') as bfFile:
@@ -144,120 +121,53 @@ def fuSaveProtPepOnes(strDir, strProtFileName, listProtPepOnes):
                 bfFile.write('|{:d},{:d}'.format(listRange[0], listRange[1]))
             bfFile.write("\n")
 
-def fuRunAllProt(listProtFileName, strBaseProtRefsPath, strSparseDir, protsDic):
+def searchAll(listProtFileName, strBaseProtRefsPath, strSparseDir, protsDic):
+    """ Search for all peptides in all corresponding protein matches """
 
-    def fuRunProt(strProtFileName):
+    def fuSearchOne(strProtFileName):
       print("started: " + strProtFileName)
       # remove the trailing ".txt" from filename
       strProtName = strProtFileName[0:-4]
       listPeptideProb = protsDic[strProtName].values()
 
-      listProtPepOnes = fuFindPeptideMatch(strBaseProtRefsPath , strProtFileName, listPeptideProb)
+      listProtPepOnes = searchPepsInOneProt(strBaseProtRefsPath , strProtFileName, listPeptideProb)
       if len(listProtPepOnes) > 0:
-          fuSaveProtPepOnes(strSparseDir, strProtFileName, listProtPepOnes)
+          saveProtMatches(strSparseDir, strProtFileName, listProtPepOnes)
           print("saved:" + strProtFileName)
           return 1
       else:
           return 0
 
     '''    
-    isSave = fuRunProt(listProtFileName[1])
+    isSave = fuSearchOne(listProtFileName[1])
     print(listProtRefFileName[1])
     print(isSave)
     '''    
  
     print(listProtFileName)
     pool = ThreadPool(32)
-    res = pool.map(fuRunProt, listProtFileName)
+    res = pool.map(fuSearchOne, listProtFileName)
     pool.close() 
     pool.join() 
     print(res)
 
-def fuGetProtLength(strFilePath):
+def getProtLength(strFilePath):
     with open(strFilePath, 'r') as bfFile:
         nLength = len(bfFile.readline())
         return nLength
 
-def fuSaveMetaInfo(strBasePath, strMetaInfoFilename, strBaseProtRefsPath):
+def saveMetaInfo(strBasePath, strMetaInfoFilename, strBaseProtRefsPath):
     listProtFiles = [i for i in  os.listdir(strBasePath) if i.endswith('.txt') ]
     with open(strMetaInfoFilename, 'w') as bfFile:
         for strProtFileName in listProtFiles:
             strFilePath = '{!s}/{!s}'.format(strBaseProtRefsPath, strProtFileName)
-            nProtWidth = fuGetProtLength(strFilePath)
+            nProtWidth = getProtLength(strFilePath)
             bfFile.write('{!s},{:d}\n'.format(strProtFileName, nProtWidth))
 
-def fuSavePepProbsTargetFromList(strFilePath, listPeptideProb):
+def savePepProbsTargetFromList(strFilePath, listPeptideProb):
     with open(strFilePath, 'w') as bfFile:
         for row in listPeptideProb:
             dProb = row[1]
             bfFile.write('{:.6f}\n'.format(dProb))
 
     return
-
-
-#sparseData3 (cleavage sites) related functions
-def getEdges(lSegments):
-    edges = {}
-    for sLine in lSegments:
-        for s in sLine[1]:
-            sL = s[0]
-            sR = s[1] + sL
-            edges[sL] = True
-            edges[sR] = True
-
-    return sorted(list(edges.keys()))
-    
-def getOneEdgeMatch(pepMatches, edges):
-
-    eMatchesOne = []
-    for pM in pepMatches:
-        eL = pM[0]
-        idx = edges.index(eL)
-        eMatchesOne += [[idx, 1]]
-
-        eR = eL + pM[1]
-        idx = edges.index(eR)
-        eMatchesOne += [[idx, 1]]
-
-    return eMatchesOne
-
-def getEdgeMatches(edges, flistProtPepOnes):
-    eMatches = []
-    for s in flistProtPepOnes:
-        eMatchesOne = getOneEdgeMatch(s[1], edges)
-        eMatches += [[ s[0], eMatchesOne]]
-
-    return eMatches
-
-def fuFindPeptideMatch_CleavageSites(strBaseProtRefsPath , strProtFilename, listPeptideProb):
-    flistProtPepOnes = fuFindPeptideMatch(strBaseProtRefsPath, strProtFilename, listPeptideProb)
-    edges = getEdges(flistProtPepOnes)
-    eMatches = getEdgeMatches(edges, flistProtPepOnes)
-
-    return eMatches, len(edges)
-
-def fuRunAllProt_CleavageSites(listProtFileName, strBaseProtRefsPath, strSparseDir, listPeptideProb):
-    def fuRunProt(strProtFileName):
-        print("#start:" + strProtFileName)
-        listProtPepOnes, nEdges = fuFindPeptideMatch_CleavageSites(strBaseProtRefsPath , strProtFileName, listPeptideProb)
-        if len(listProtPepOnes) > 0:
-            fuSaveProtPepOnes(strSparseDir, strProtFileName, listProtPepOnes)
-            print("saved:" + strProtFileName)
-            return [strProtFileName, nEdges]
-
-    if len(listProtFileName) < 2 : # for test
-        fuRunProt(listProtFileName[0])
-        return
-    
-    #print(listProtFileName)
-    pool = ThreadPool(16)
-    res = pool.map(fuRunProt, listProtFileName)
-    pool.close() 
-    pool.join() 
-    
-    return list(filter(None.__ne__, res))
-
-def fuSaveMetaInfo_CleavageSites(strFilename, metaInfo):
-    with open(strFilename, 'w') as bfFile:
-        for info in metaInfo:
-            bfFile.write('{!s},{:d}\n'.format(info[0], info[1]))

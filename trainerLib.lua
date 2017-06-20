@@ -1,13 +1,17 @@
+--[[ Description: functions used for training of nn]]
 require 'nn'
 require 'optim'
 local myUtil = require("../MyCommon/util.lua")
 
 do
-  local trainerPool = {}
+  local trainerLib = {}
 
-  function trainerPool.getDefaultTrainParams(nRows, strOptimMethod, nMaxIteration)
+  -- Input(nRows): batch size (currently allways full batch).
+  -- Input(strOptimMethod): method used for optimization
+  -- Input(nMaxIteration): maximum number of iterations
+  function trainerLib.getDefaultTrainParams(nRows, strOptimMethod, nMaxIteration)
 
-    local taTrainParam = {   batchSize = nRows and math.floor(nRows),
+    local taTrainParam = {  batchSize = nRows and math.floor(nRows),
                             criterion = nn.MSECriterion(),
                             nMaxIteration = nMaxIteration or 10,
                             coefL1 = 0.0,
@@ -52,11 +56,16 @@ do
     return taTrainParam
   end
 
-  function trainerPool.pri_trainSparseInputNet_SingleRound(mNet, taX, teY, taTrainParam)
+  -- Description: performs single round of training (using any provided optim method).
+  -- Input(mNet): nn main object
+  -- Input(taX): the nn input
+  -- Input(taY): the nn target
+  -- Input(taTrainParam): the training praramters
+  function trainerLib.pri_trainSparseInputNet_SingleRound(mNet, taX, teY, taTrainParam)
     parameters, gradParameters = mNet:getParameters()
     local criterion = taTrainParam.criterion
     local overallErr = 0
-		local scale = taTrainParam.taOptimParams.learningRate or 1
+    local scale = taTrainParam.taOptimParams.learningRate or 1
 
       local fuEval = function(x)
         collectgarbage()
@@ -89,18 +98,16 @@ do
           -- Gradients:
           gradParameters:add( sign(parameters):mul(taTrainParam.coefL1) + parameters:clone():mul(taTrainParam.coefL2) )
         end
-        
---        overallErr = overallErr + f
 
         return f, gradParameters
       end --fuEval
 
       taTrainParam.fuOptim(fuEval, parameters, taTrainParam.taOptimParams)
 
-    return trainerPool.getErr(mNet, taX, teY, taTrainParam)
+    return trainerLib.getErr(mNet, taX, teY, taTrainParam)
   end
 
-  function trainerPool.getErr(mNet, taInput, teTarget, taTrainParam)
+  function trainerLib.getErr(mNet, taInput, teTarget, taTrainParam)
     local criterion = taTrainParam.criterion
 
     local teOutput = mNet:forward(taInput)
@@ -110,34 +117,33 @@ do
     return fErr
   end
 
-  function trainerPool.trainSparseInputNet(mNet, taInput, teTarget, nMaxIteration, strOptimMethod, isEarlyStop, dStopError, taTrainParam)
-		strOptimMethod = strOptimMethod or "SGD"
+  -- Description: train nn
+  function trainerLib.trainSparseInputNet(mNet, taInput, teTarget, nMaxIteration, strOptimMethod, isEarlyStop, dStopError, taTrainParam)
+    strOptimMethod = strOptimMethod or "SGD"
     local criterion = nn.MSECriterion()
-    local taTrainParam = taTrainParam or trainerPool.getDefaultTrainParams(teTarget:size(1), strOptimMethod, nMaxIteration )
+    local taTrainParam = taTrainParam or trainerLib.getDefaultTrainParams(teTarget:size(1), strOptimMethod, nMaxIteration )
 
     local errPrev = math.huge
     local errCurr = math.huge
-		local errBest = math.huge
-		teParameters, teGradParameters = mNet:getParameters()
-		local teParametersBest = torch.Tensor(teParameters:size())
-		local dMinDiffToUpdate = 0.0000001
+    local errBest = math.huge
+    teParameters, teGradParameters = mNet:getParameters()
+    local teParametersBest = torch.Tensor(teParameters:size())
+    local dMinDiffToUpdate = 0.0000001
 
     for i=1, taTrainParam.nMaxIteration do
---			taTrainParam.taOptimParams.learningRate =   --(errPrev < math.huge ) and (errPrev*40) or 0.9
-      errCurr = trainerPool.pri_trainSparseInputNet_SingleRound(mNet, taInput, teTarget, taTrainParam)
+      errCurr = trainerLib.pri_trainSparseInputNet_SingleRound(mNet, taInput, teTarget, taTrainParam)
 
---      --[[
       if isEarlyStop and (errPrev <= errCurr or myUtil.isNan(errCurr))  then
         print("** early stop **")
         return errPrev
-			end
+      end
 
-			if errCurr < (errBest - dMinDiffToUpdate) then
-				print("updateing, error: " .. errCurr)
-				teParameters, teGradParameters = mNet:getParameters()
-				teParametersBest:copy(teParameters)
-				errBest = errCurr
-			end
+      if errCurr < (errBest - dMinDiffToUpdate) then -- updating only if minimum dMinDiffToUpdate improvement
+        print("updateing, error: " .. errCurr)
+        teParameters, teGradParameters = mNet:getParameters()
+        teParametersBest:copy(teParameters)
+        errBest = errCurr
+      end
 
       if errCurr ~= nil and errCurr < math.huge then
         local message = errCurr < errPrev and "<" or "!>"
@@ -145,24 +151,21 @@ do
         myUtil.log(errCurr, false, taTrainParam.isLog)
         errPrev = errCurr
       else
-				print(string.format("!!!! %s !!!!", tostring(errCurr)))
+        print(string.format("!!!! %s !!!!", tostring(errCurr)))
         error("invalid value for errCurr!")
       end
-      --]]
 
-			if dStopError ~= nil and errCurr < dStopError then
-				print(string.format("Reached error bellow: %f, therefore enough!", dStopError ))
-				break
-			end
-
+      if dStopError ~= nil and errCurr < dStopError then
+        print(string.format("Reached error bellow: %f, therefore enough!", dStopError ))
+        break
+      end
     end
 
-		teParameters, teGradParameters = mNet:getParameters()
-		teParameters:copy(teParametersBest)
+    teParameters, teGradParameters = mNet:getParameters()
+    teParameters:copy(teParametersBest)
 
     return errBest
   end
 
-
-  return trainerPool
+  return trainerLib
 end
