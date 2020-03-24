@@ -15,7 +15,7 @@ DeepPep, is a **protein identification** software which uses deep-convolutional 
 ### Installation
 ```
 git clone https://github.com/ameenetemady/MyCommon.git
-git clone https://github.com/DeepPep/DeepPep.git
+git clone https://github.com/IBPA/DeepPep.git
 ```
 
 ### Running
@@ -29,7 +29,7 @@ git clone https://github.com/DeepPep/DeepPep.git
 Upon completion, ```pred.csv``` will contain the predicted protein identification probabilities.
 
 ### Benchmark Datasets
-There are [7 example datasets](https://github.com/DeepPep/public/tree/master/data) (used for benchmarking in the paper). Each dataset is generated from MS/MS raw files using TPP pipeline. For example, to run the [18Mix benchmark dataset](https://github.com/DeepPep/public/tree/master/data/18mix), simply run the following:
+There are [7 example datasets](https://github.com/IBPA/DeepPep/tree/master/data) (used for benchmarking in the paper). Each dataset is generated from MS/MS raw files using TPP pipeline. For example, to run the [18Mix benchmark dataset](https://github.com/IBPA/DeepPep/tree/master/data/18mix), simply run the following:
 
 ```
 python run.py data/18Mix
