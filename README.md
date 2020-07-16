@@ -6,7 +6,7 @@ DeepPep, is a **protein identification** software which uses deep-convolutional 
 * [torch7](http://torch.ch/docs/getting-started.html)
 * luarocks install cephes
 * luarocks install csv
-* [SparseNN](https://github.com/ameenetemady/SparseNN/)
+* [SparseNN](https://github.com/IBPA/SparseNN/)
 * python3.4 or above
 * [biopython](http://biopython.org/wiki/Download)
 
